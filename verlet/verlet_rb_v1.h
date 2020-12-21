@@ -120,6 +120,11 @@ public:
         //vector<vConnection>().swap(m_connections); 
     }*/
 
+    int getId()
+    {
+        return m_id;
+    }
+
     void update(float dt)
     {
         for_each(m_particles.begin(), m_particles.end(),
@@ -127,13 +132,17 @@ public:
             {
                 p.update(dt);
             });
+    }  
+
+    void updateConstraint()
+    {
         for(int i = 0; i < 2; i++) 
             for_each(m_connections.begin(), m_connections.end(),
                 [&](vConnection &c)
                 {
                     c.enforceConstraint();
                 });
-    }        
+    }      
 
     vector<vParticle>* getParticles()
     {
@@ -174,19 +183,19 @@ public:
 
     vec3 getXAxis(){
         if(m_kind == BOX){
-            vec3 pa = m_particles.at(0).getPosition();
-            vec3 pb = m_particles.at(1).getPosition();
-            return glm::normalize(pb - pa);
+            vec3 v0 = m_particles.at(0).getPosition();
+            vec3 v1 = m_particles.at(1).getPosition();
+            return glm::normalize(v1 - v0);
         }
     }
 
     vec3 getYAxis(){
         if(m_kind == BOX){
-            vec3 pa = m_particles.at(0).getPosition();
-            vec3 pc = m_particles.at(3).getPosition();
+            vec3 v0 = m_particles.at(0).getPosition();
+            vec3 v2 = m_particles.at(3).getPosition();
             
             vec3 x = getXAxis();
-            return glm::normalize(glm::cross(pc-pa, x));
+            return glm::normalize(glm::cross(v2-v0, x));
         }
     }
 
@@ -201,11 +210,11 @@ public:
     vector<vec3> getXYZAxis()
     {
         if(m_kind == BOX){
-            vec3 pa = m_particles.at(0).getPosition();
-            vec3 pb = m_particles.at(1).getPosition();
-            vec3 pc = m_particles.at(2).getPosition();
-            vec3 x = glm::normalize(pb - pa);
-            vec3 y = glm::normalize(glm::cross(pc-pa, x));
+            vec3 v0 = m_particles.at(0).getPosition();
+            vec3 v1 = m_particles.at(1).getPosition();
+            vec3 v2 = m_particles.at(2).getPosition();
+            vec3 x = glm::normalize(v0 - v1);
+            vec3 y = glm::normalize(glm::cross(x, v2-v0));
             vec3 z = glm::cross(x, y);
 
             vector<vec3> v;

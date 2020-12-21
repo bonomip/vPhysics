@@ -89,6 +89,21 @@ public:
         m_pNow = pos;
     }
 
+    void setPositionConservingMomentum(const vec3 &p0)
+    {
+        /*vec3 v1 = (p0-m_pNow);
+        float post = abs(glm::length(v1));
+        std::cout << "PARTICLE CHANGE POSITION" << std::endl;
+        if(post > 0.0f){
+        vec3 p1 = m_pNow;
+        m_pOld = m_pNow;
+        m_pNow = p1+(v1)*(glm::length(m_pNow-m_pOld)/glm::length(v1));
+        return;
+        }*/
+        //m_pOld = m_pNow;
+        m_pNow = p0;
+    }
+
     float getDt()
     {
         return m_dt;

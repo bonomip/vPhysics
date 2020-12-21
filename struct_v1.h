@@ -6,20 +6,75 @@
 typedef glm::vec3 vec3;
 using std::abs;
 using glm::dot;
+using std::sqrtf;
+using std::powf;
 using glm::cross;
 
+
+static float norma(vec3 v)
+{
+    float delta = powf(v.x, 2.0f)+powf(v.y, 2.0f)+powf(v.z, 2.0f);
+    if(delta <= 0) return 0.0f;
+    return std::sqrtf(delta);
+}
+
+static vec3 normalize(vec3 v)
+{
+    return v / norma(v);
+}
+
+static vec3 middlePoint(vec3 p0, vec3 p1)
+{
+    return vec3( (p0.x+p1.x)/2.0f,(p0.y+p1.y)/2.0f,(p0.z+p1.z)/2.0f );
+}
+
+static vec3 middleVector(vec3 v, vec3 w)
+{
+    float x = norma(v);
+    float y = norma(w);
+    return normalize( v + w ) * ( ( x + y ) / 2.0f );
+}
 
 struct triangle
 {
     vec3 v0, v1, v2;
+    int i0, i1, i2; //id of the patricle 
 
-    static triangle create(vec3 a, vec3 b, vec3 c)
+    static triangle create(vec3 a, vec3 b, vec3 c, int ida, int idb, int idc)
     {
         triangle t;
         t.v0 = a;
         t.v1 = b;
         t.v2 = c;
+        t.i0 = ida;
+        t.i1 = idb;
+        t.i2 = idc;
         return t;
+    }
+    
+    bool static isEqual(triangle t, triangle s)
+    {
+        return t.i0 == s.i0 && t.i1 == s.i1 && t.i2 == s.i2;
+    }
+    
+    static vec3 getCentroid(triangle tri)
+    {
+        float x, y, z;
+        x = (tri.v0.x+tri.v1.x+tri.v2.x)/3.0f;
+        y = (tri.v0.y+tri.v1.y+tri.v2.y)/3.0f;
+        z = (tri.v0.z+tri.v1.z+tri.v2.z)/3.0f;
+        return vec3(x,y,z);
+    }
+
+    static vec3 getNormal(triangle tri)
+    {
+        return glm::normalize(glm::cross( tri.v1-tri.v0, tri.v2-tri.v0 ) );
+    }
+
+    static bool rejectTri(vec3 rayDir, triangle tri)
+    {
+        vec3 n = glm::normalize(glm::cross( tri.v1-tri.v0, tri.v2-tri.v0 ) );
+        return glm::dot(n, rayDir) >= 0;
     }
 
     static bool rayIntersect(vec3 rayOrigin, vec3 rayDir, triangle tri, vec3 &intersection)
@@ -57,13 +112,75 @@ struct triangle
 
         if(t > eps) // ray intersection
         {           
-            intersection = rayOrigin + t * rayDir;
+            intersection = rayOrigin + (t * rayDir);
             return true;
         } else // This means that there is a line intersection but not a ray intersection.
             return false; 
 
     }
 };
+
+
+
+struct triangleResp
+{
+    triangle tri;
+    vec3 direction;
+    vec3 intersection;
+
+    triangleResp static create(triangle t, vec3 dir, vec3 intersect)
+    {
+        triangleResp tr;
+        tr.tri = t;
+        tr.direction = dir;
+        tr.intersection = intersect;
+        return tr;
+    }
+
+    triangleResp static cumulate(triangleResp t0, triangleResp t1)
+    {
+        triangleResp r;
+        r.tri = t0.tri;
+        r.intersection = middlePoint(t0.intersection, t1.intersection);
+        r.direction = middleVector(t0.direction, t1.direction);
+        return r;
+    }
+
+    void static baricentricDistribution(triangleResp trsp, float &u, float &v, float &w)
+    { //homogeneous
+        vec3 v0 = trsp.tri.v1 - trsp.tri.v0;
+        vec3 v1 = trsp.tri.v2 - trsp.tri.v0;
+        vec3 v2 = trsp.intersection - trsp.tri.v0;
+        float d00 = dot(v0, v0);
+        float d01 = dot(v0, v1);
+        float d11 = dot(v1, v1);
+        float d20 = dot(v2, v0);
+        float d21 = dot(v2, v1);
+        float denom = d00 * d11 - d01 * d01;
+        v = (d11 * d20 - d01 * d21) / denom;
+        w = (d00 * d21 - d01 * d20) / denom;
+        u = 1.0f - v - w;
+    }
+
+    /*
+    // Compute barycentric coordinates (u, v, w) for
+// point p with respect to triangle (a, b, c)
+void Barycentric(Point p, Point a, Point b, Point c, float &u, float &v, float &w)
+{
+    Vector v0 = b - a, v1 = c - a, v2 = p - a;
+    float d00 = Dot(v0, v0);
+    float d01 = Dot(v0, v1);
+    float d11 = Dot(v1, v1);
+    float d20 = Dot(v2, v0);
+    float d21 = Dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    v = (d11 * d20 - d01 * d21) / denom;
+    w = (d00 * d21 - d01 * d20) / denom;
+    u = 1.0f - v - w;
+}
+    */
+};
+
 
 template <class RigidBody> struct box{
 
@@ -73,54 +190,41 @@ template <class RigidBody> struct box{
         vec3 y = a.y*a.h;
         vec3 z = a.z*a.d;
 
-        //1 top face CW
-        vec3 v1 = a.position+(-1.0f*x)+y+z; //1
-        vec3 v2 = a.position+x+y+z; //2
-        vec3 v3 = a.position+x+y+(-1.0f*z); //3
-        vec3 v4 = a.position+(-1.0f*x)+y+(-1.0f*z); //4
+        //1 top face CW                                     //tri vertx -> partic id
+        vec3 v1 = a.position+(-1.0f*x)+y+z;                 //1 -> 1
+        vec3 v2 = a.position+x+y+z;                         //2 -> 0
+        vec3 v3 = a.position+x+y+(-1.0f*z);                 //3 -> 3
+        vec3 v4 = a.position+(-1.0f*x)+y+(-1.0f*z);         //4 -> 2
         //2 bottom face CW
-        vec3 v5 = a.position+(-1.0f*x)+(-1.0f*y)+z; //5
-        vec3 v6 = a.position+x+(-1.0f*y)+z; //6
-        vec3 v7 = a.position+x+(-1.0f*y)+(-1.0f*z); //7
-        vec3 v8 = a.position+(x*-1.0f)+(-1.0f*y)+(-1.0f*z); //8
+        vec3 v5 = a.position+(-1.0f*x)+(-1.0f*y)+z;         //5 -> 5
+        vec3 v6 = a.position+x+(-1.0f*y)+z;                 //6 -> 4
+        vec3 v7 = a.position+x+(-1.0f*y)+(-1.0f*z);         //7 -> 7
+        vec3 v8 = a.position+(x*-1.0f)+(-1.0f*y)+(-1.0f*z); //8 -> 6
         
         //left 
-       //145
-       //458
-       result.push_back(triangle::create(v1, v4, v5));
-       result.push_back(triangle::create(v4, v5, v8));
+       result.push_back(triangle::create(v1, v4, v5, 1, 2, 5));
+       result.push_back(triangle::create(v4, v8, v5, 2, 6, 5));
 
 
         //top
-       //124
-       //243
-       result.push_back(triangle::create(v1, v2, v4));
-       result.push_back(triangle::create(v2, v4, v3));
+       result.push_back(triangle::create(v1, v2, v4, 1, 0, 2));
+       result.push_back(triangle::create(v2, v3, v4, 0, 3, 2));
 
         //right
-       //327
-       //376
-       result.push_back(triangle::create(v3, v2, v7));
-       result.push_back(triangle::create(v3, v7, v6));
-
-       //back
-       //126
-       //165
-
-       result.push_back(triangle::create(v1, v2, v6));
-       result.push_back(triangle::create(v1, v6, v5));
+       result.push_back(triangle::create(v3, v2, v7, 3, 0, 7));
+       result.push_back(triangle::create(v2, v6, v7, 0, 4, 7));
 
        //front
-       //437
-       //478
-       result.push_back(triangle::create(v4, v3, v7));
-       result.push_back(triangle::create(v4, v7, v8));
+       result.push_back(triangle::create(v1, v6, v2, 1, 4, 0));
+       result.push_back(triangle::create(v1, v5, v6, 1, 5, 4));
+
+       //back
+       result.push_back(triangle::create(v4, v3, v7, 2, 3, 7));
+       result.push_back(triangle::create(v4, v7, v8, 2, 7, 6));
 
        //bottom
-       //567
-       //578
-       result.push_back(triangle::create(v5, v6, v7));
-       result.push_back(triangle::create(v5, v7, v8));
+       result.push_back(triangle::create(v5, v7, v6, 5, 7, 4));
+       result.push_back(triangle::create(v5, v8, v7, 5, 6, 7));
     }
 
     static bool collide(box<RigidBody> a, box<RigidBody> b, vec3 &intersection)

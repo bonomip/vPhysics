@@ -26,6 +26,8 @@ template <class RigidBody> class CollisionDetection
     int octreeDepth = 5;
     vector<class Octree<RigidBody>::OctreeNode*> octreeLeafs;
     Octree<RigidBody> * m_tree;
+    vector<vector<int>> colcheck;
+    bool coltores = false;
 
     CollisionDetection(const float &worldSize) //world center is implicit at 0 0 0
     {
@@ -38,8 +40,15 @@ template <class RigidBody> class CollisionDetection
         m_rBodies.push_back(rb);
     }
 
+    void clean()
+    {
+        vector<RigidBody*>().swap(m_rBodies);
+    }
+
     void update() //called each physics step
     {
+        collisionResp->clear();
+
         //struct used for collision detection
         box<RigidBody> a;
         box<RigidBody> b;
@@ -75,18 +84,38 @@ template <class RigidBody> class CollisionDetection
                     b = box<RigidBody>::create(pt_b);
                     vec3 n;
                     
-                    //if the two boxes collide
-                    if(box<RigidBody>::collide(a, b, n))
-                    {
-                        
-                        collisionResp->addCollision(new Collision<RigidBody>(pt_a, a, pt_b, b, n));
-                    }
+                    if( collisionResp->canAddColl(Collision<RigidBody>::genId(pt_a->getId(), pt_b->getId())) )
+                        if(box<RigidBody>::collide(a, b, n))
+                        {
+                            coltores = true;
+                            vector<int> df = Collision<RigidBody>::genId(pt_a->getId(), pt_b->getId());
+                            std::cout << "COLLISION DETECTION - UPDATE -> collision id " << df.at(0) << "." << df.at(1);
+                            std::cout << " in leaf number " << i << std::endl;
+                            collisionResp->addCollision(new Collision<RigidBody>(pt_a, a, pt_b, b, n));
+                        }
                 }
             }
         }
+        if(coltores)
+        { //if there are collision to resolve
+            //than we resolve the collisions
+            collisionResp->resolveCollisions();
+            coltores = false;
+        } else 
+        {
+            collisionResp->clearDebug();
+        }
+        
+    }
 
-        //than we resolve the collisions
-        collisionResp->resolveCollisions();
+    int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
+    {
+        return collisionResp->debugCollision(t, i, p, l);
+    }
+
+    int debugCollison2(vector<CollisionResponse<vRigidBody>::Response> &r)
+    {
+        return collisionResp->debugCollision(r);
     }
 
     void debugOctree(vector<class Octree<RigidBody>::OctreeNode*> *nodes)

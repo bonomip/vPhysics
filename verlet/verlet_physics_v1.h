@@ -23,6 +23,8 @@ using namespace std;
 //OpenGL extension
 #include <glad/glad.h>
 
+#include <physics/struct_v1.h>
+
 class vPhysics
 {
 
@@ -56,18 +58,24 @@ public:
 
     void cleanWorld()
     {
+        m_collisionDetection->clean();
         vector<vRigidBody*>().swap(m_rBodies);
     }
 
     void step(float dt)
-    {
-
-        m_collisionDetection->update(); 
-        
+    {      
         for_each(m_rBodies.begin(), m_rBodies.end(),
             [&](vRigidBody *body)
             {
                 body->update(dt);
+            });
+
+        m_collisionDetection->update();
+
+        for_each(m_rBodies.begin(), m_rBodies.end(),
+            [&](vRigidBody *body)
+            {
+                body->updateConstraint();
             });
     }
 
@@ -76,6 +84,67 @@ public:
         return &m_rBodies;
     }
 
+    vector<triangle> debugTri()
+    {
+
+        vector<triangle> res; 
+        for_each(m_rBodies.begin(), m_rBodies.end(),
+            [&](vRigidBody *body)
+            {
+                vector<triangle> t;
+                box<vRigidBody>().getTrianglesfromBox(t, box<vRigidBody>().create(body));
+                for_each(t.begin(), t.end(),
+                [&](triangle tri){
+                    res.push_back(tri);
+                });
+            });
+        return res;
+       /* vector<vec3> res; //SHOW TRINAGLE VERTICES ///method returns vector<vec3>
+        for_each(m_rBodies.begin(), m_rBodies.end(),
+            [&](vRigidBody *body)
+            {
+                vector<triangle> t;
+                box<vRigidBody>().getTrianglesfromBox(t, box<vRigidBody>().create(body));
+                for_each(t.begin(), t.end(),
+                [&](triangle tri){
+                    res.push_back(tri.v0);
+                    res.push_back(tri.v1);
+                    res.push_back(tri.v2);
+                });
+            });
+        return res; /*
+
+        /*vector<vec3> res; //SHOW VERTICES ///method returns vector<vec3>
+        vector<vec3> tmp;
+
+        int bodyn = 1;
+        for_each(m_rBodies.begin(), m_rBodies.end(),
+            [&](vRigidBody *body)
+            {
+                int point = 0;
+                vector<triangle> t;
+                box<vRigidBody>().debug(t, tmp, box<vRigidBody>().create(body));
+                for_each(tmp.begin(), tmp.end(),
+                [&](vec3 v){
+                    int asd = bodyn*point;
+                    std::cout << "point n =\t" << asd << std::endl;
+                    point++;
+                    res.push_back(v);
+                });
+                body++;
+            });
+        return res; */
+    }
+
+    int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
+    {
+        return m_collisionDetection->debugCollision(t, i, p, l);
+    }
+
+    int debugCollision2(CollisionResponse<RigidBody::Response r)
+    {
+        return m_collisionDetection->debugCollision2(r);
+    }
     void debugOctree(vector<Octree<vRigidBody>::OctreeNode*> *nodes)
     {
         m_collisionDetection->debugOctree(nodes);
