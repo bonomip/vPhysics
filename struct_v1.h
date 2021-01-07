@@ -110,7 +110,7 @@ struct triangle
 
         t = tmp * dot(e2, q);
 
-        if(t > eps) // ray intersection
+        if(t >= 0) // ray intersection
         {           
             intersection = rayOrigin + (t * rayDir);
             return true;
@@ -119,49 +119,6 @@ struct triangle
 
     }
 };
-
-
-
-struct triangleResp
-{
-    triangle tri;
-    vec3 direction;
-    vec3 intersection;
-
-    triangleResp static create(triangle t, vec3 dir, vec3 intersect)
-    {
-        triangleResp tr;
-        tr.tri = t;
-        tr.direction = dir;
-        tr.intersection = intersect;
-        return tr;
-    }
-
-    triangleResp static cumulate(triangleResp t0, triangleResp t1)
-    {
-        triangleResp r;
-        r.tri = t0.tri;
-        r.intersection = middlePoint(t0.intersection, t1.intersection);
-        r.direction = middleVector(t0.direction, t1.direction);
-        return r;
-    }
-
-    void static baricentricDistribution(triangleResp trsp, float &u, float &v, float &w)
-    { //homogeneous
-        vec3 v0 = trsp.tri.v1 - trsp.tri.v0;
-        vec3 v1 = trsp.tri.v2 - trsp.tri.v0;
-        vec3 v2 = trsp.intersection - trsp.tri.v0;
-        float d00 = dot(v0, v0);
-        float d01 = dot(v0, v1);
-        float d11 = dot(v1, v1);
-        float d20 = dot(v2, v0);
-        float d21 = dot(v2, v1);
-        float denom = d00 * d11 - d01 * d01;
-        v = (d11 * d20 - d01 * d21) / denom;
-        w = (d00 * d21 - d01 * d20) / denom;
-        u = 1.0f - v - w;
-    }
-
     /*
     // Compute barycentric coordinates (u, v, w) for
 // point p with respect to triangle (a, b, c)
@@ -179,8 +136,6 @@ void Barycentric(Point p, Point a, Point b, Point c, float &u, float &v, float &
     u = 1.0f - v - w;
 }
     */
-};
-
 
 template <class RigidBody> struct box{
 

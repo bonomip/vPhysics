@@ -10,16 +10,17 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #include <physics/verlet/verlet_physics_v1.h>
 #include <physics/octree_v1.h>
-#include <physics/collision_response_v1.h>
 #include <physics/struct_v1.h>
 #include <physics/collision_v1.h>
 
-template <class RigidBody> class CollisionDetection
+template <class RigidBody> class CollisionSolver
 {
     public:
-    CollisionResponse<RigidBody>* collisionResp;
     vector<RigidBody*> m_rBodies;
-    vector<class Collision<RigidBody>*> colls;
+    vector<Collision*> colls;
+    vector<Response*> resp;
+    vector<Response*> debug;
+    vector<vector<int>> collisionId;
 
     float octreeSize = 10.0f;
     glm::vec3 octreeCenter = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -29,9 +30,9 @@ template <class RigidBody> class CollisionDetection
     vector<vector<int>> colcheck;
     bool coltores = false;
 
-    CollisionDetection(const float &worldSize) //world center is implicit at 0 0 0
+
+    CollisionSolver(const float &worldSize) //world center is implicit at 0 0 0
     {
-        collisionResp = new CollisionResponse<RigidBody>();
         m_tree = new Octree<RigidBody>(octreeCenter, worldSize*2.0f, octreeDepth);
     }
 
@@ -47,13 +48,13 @@ template <class RigidBody> class CollisionDetection
 
     void update() //called each physics step
     {
-        collisionResp->clear();
+        clearResp();
 
         //struct used for collision detection
         box<RigidBody> a;
         box<RigidBody> b;
 
-        vector<class Collision<RigidBody>*>().swap(colls);
+        vector<Collision*>().swap(colls);
 
         //realease the memory
         vector<class Octree<RigidBody>::OctreeNode*>().swap(octreeLeafs);
@@ -63,7 +64,7 @@ template <class RigidBody> class CollisionDetection
         
         //we fetch the leafs of the tree (where rigidbodies are)
         //only leaf containing more than one rigidbody are returned 
-        m_tree->getLeafsContainingMoreThanOneObject(&octreeLeafs);
+        m_tree->getLeafsWithObj(&octreeLeafs);
         
         //for each leafs we check if there are collision between the rigidbodies inside it
         for(int i = 0; i < octreeLeafs.size(); i++)
@@ -84,14 +85,14 @@ template <class RigidBody> class CollisionDetection
                     b = box<RigidBody>::create(pt_b);
                     vec3 n;
                     
-                    if( collisionResp->canAddColl(Collision<RigidBody>::genId(pt_a->getId(), pt_b->getId())) )
+                    if( canAddColl(Collision::genId(pt_a->getId(), pt_b->getId())) )
                         if(box<RigidBody>::collide(a, b, n))
                         {
                             coltores = true;
-                            vector<int> df = Collision<RigidBody>::genId(pt_a->getId(), pt_b->getId());
+                            vector<int> df = Collision::genId(pt_a->getId(), pt_b->getId());
                             std::cout << "COLLISION DETECTION - UPDATE -> collision id " << df.at(0) << "." << df.at(1);
                             std::cout << " in leaf number " << i << std::endl;
-                            collisionResp->addCollision(new Collision<RigidBody>(pt_a, a, pt_b, b, n));
+                            addCollision(new Collision(pt_a, a, pt_b, b, n));
                         }
                 }
             }
@@ -99,16 +100,16 @@ template <class RigidBody> class CollisionDetection
         if(coltores)
         { //if there are collision to resolve
             //than we resolve the collisions
-            collisionResp->resolveCollisions();
+            resolveCollisions();
             coltores = false;
         } else 
         {
-            collisionResp->clearDebug();
+            clearDebug();
         }
         
     }
 
-    int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
+    /*int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
     {
         return collisionResp->debugCollision(t, i, p, l);
     }
@@ -116,7 +117,78 @@ template <class RigidBody> class CollisionDetection
     int debugCollison2(vector<CollisionResponse<vRigidBody>::Response> &r)
     {
         return collisionResp->debugCollision(r);
+    }*/
+
+    bool canAddColl(vector<int> col_id)
+    {
+        for(int i = 0; i < collisionId.size(); i++)
+            if(col_id.at(0) == collisionId.at(i).at(0) && col_id.at(1) == collisionId.at(i).at(1))
+                return false;
+        return true;
     }
+
+    void addCollision(Collision * c)
+    {   
+        collisionId.push_back( Collision::genId( c->pt_a->getId(),c->pt_b->getId() ) );
+        addResponses(*c);
+    } 
+
+    void addResponses(Collision c)
+    { //TO OPTIMIZE (sort indexes? )
+        for(int i = 0; i < c.getResponses().size(); i++)
+        {
+            for(int j = 0; j < resp.size(); j++)
+                if(c.getResponses().at(i)->getId() == resp.at(j)->getId() )
+                    resp.at(j)->update(c.getResponses().at(i));
+            resp.push_back(c.getResponses().at(i));
+        }
+    }
+
+    void resolveCollisions()
+    {
+        for_each(resp.begin(), resp.end(),
+            [&](Response* r)
+            {
+                r->apply();
+            });
+        clearDebug();    
+        updateDebug();
+        clearResp();
+        std::cout << "\t\t\tCOLLISION RESPONSE -> CLEAR DATA" << std::endl;
+    }
+
+    void clearResp()
+    {
+        vector<Response*>().swap(resp);
+        vector<vector<int>>().swap(collisionId);
+    }
+    
+    void clearDebug()
+    {
+        vector<Response*>().swap(debug);
+    }
+
+    void updateDebug()
+    {
+        resp.swap(debug);
+    }
+   
+    /*
+    int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
+    { 
+        int n = 0;
+        for_each(debug.begin(), debug.end(),
+            [&](Response* r)
+            {
+                n +=r->debugCollision(t, i, p, l);
+            });
+        return n;
+    }
+
+    int debugCollision2(vector<CollisionResponse<vRigidBody>::Response> &r)
+    {
+
+    } */
 
     void debugOctree(vector<class Octree<RigidBody>::OctreeNode*> *nodes)
     {   

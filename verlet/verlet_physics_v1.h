@@ -12,7 +12,7 @@ using namespace std;
 
 //Physics class
 #include <physics/verlet/verlet_rb_v1.h>
-#include <physics/collision_detection_v1.h>
+#include <physics/collision_solver_v1.h>
 
 //vector classw
 #include <vector>
@@ -31,7 +31,7 @@ class vPhysics
 typedef glm::vec3 vec3;
 float m_worldSize;
 vector<vRigidBody*> m_rBodies;
-CollisionDetection<vRigidBody> * m_collisionDetection;
+CollisionSolver<vRigidBody> * m_collisionDetection;
 
 public:
     vPhysics()
@@ -41,7 +41,7 @@ public:
     void setWorld(const float &worldSize) 
     {
         m_worldSize = worldSize; //world center is implicit at 0 0 0
-        m_collisionDetection = new CollisionDetection<vRigidBody>(worldSize);
+        m_collisionDetection = new CollisionSolver<vRigidBody>(worldSize);
     }
 
     /*virtual ~vPhysics()
@@ -136,15 +136,15 @@ public:
         return res; */
     }
 
-    int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
+    /*int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
     {
         return m_collisionDetection->debugCollision(t, i, p, l);
     }
 
-    int debugCollision2(CollisionResponse<RigidBody::Response r)
+    int debugCollision2(vector<CollisionResponse::Response> &r)
     {
         return m_collisionDetection->debugCollision2(r);
-    }
+    } */
     void debugOctree(vector<Octree<vRigidBody>::OctreeNode*> *nodes)
     {
         m_collisionDetection->debugOctree(nodes);

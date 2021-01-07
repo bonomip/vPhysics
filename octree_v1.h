@@ -49,14 +49,14 @@ public:
         root->update(bodies, m_depth);
     }
 
-    void getLeafsContainingMoreThanOneObject(vector<OctreeNode*> *result)
+    void getLeafsWithObj(vector<OctreeNode*> *result)
     {
         if(root->m_isLeaf){
             if(root->m_rBodies.size() > 1)
                 result->push_back(root);
             return;
         }
-        root->getLeafsContainingMoreThanOneObject(result);
+        root->getLeafsWithObj(result);
     }
 
     void getLeafs(vector<OctreeNode*> *nodes)
@@ -168,107 +168,12 @@ public:
             }
         }
 
-       /* void update(vector<RigidBody> *bodies, const int &depth)
-        {
-            /*
-                if(depth == 0)
-                {
-
-                }
-
-
-
-            
-            m_isLeaf = false;
-            subNodes = new OctreeNode[8];
-
-            for(int i = 0; i < 8; i++)
-            { //for each potential subnodes...
-
-                vector<RigidBody*> temp;
-                vec3 newPos = m_pos;
-                newPos.x = ((i & 2) == 2) ? newPos.x + m_size*0.25f : newPos.x - m_size*0.25f;
-                newPos.y = ((i & 4) == 4) ? newPos.y - m_size*0.25f : newPos.y + m_size*0.25f;
-                newPos.z = ((i & 1) == 1) ? newPos.z + m_size*0.25f : newPos.z - m_size*0.25f;
-
-                for(int j = 0; j < m_bodies->size(); j++) //for each entry in the rigidbody list...
-                {
-                    box a, b;
-                    a.position = newPos;
-                    a.x_axis = vec3(1.0f, .0f, .0f);
-                    a.y_axis = vec3(.0f, 1.0f, .0f);
-                    a.z_axis = vec3(.0f, .0f, 1.0f);
-                    a.h_width = m_size*0.25f;
-                    a.h_height = m_size*0.25f;
-                    a.h_depth = m_size*0.25f;
-
-                    RigidBody rb = m_bodies->at(j);
-                    vector<vec3> axis = rb.getXYZAxis();
-                    b.position = rb.getPosition();
-                    b.x_axis = axis.at(0);
-                    b.y_axis = axis.at(0);
-                    b.z_axis = axis.at(0);
-                    b.h_width = rb.getSize().x;
-                    b.h_height = rb.getSize().y;
-                    b.h_depth = rb.getSize().z;
-
-                    std::cout << "a pos = "<< glm::to_string(a.position) << " b pos = "<< glm::to_string(b.position) << std::endl;
-                    vec3 d = a.position-b.position;
-                    std::cout << "distance = " << glm::length(d) << std::endl;
-                    if(collide(a,b)) //if the rigidbody collides with the sub nodes i hadd it to the temp list
-                    {
-                        std::cout << "rb id = " <<rb.getId() << std::endl;
-                        std::cout << "node id = ";
-                        for(int i = 0; i < this->getFullId().size(); i++)
-                        {
-                             std::cout << this->getFullId().at(i);
-                        }
-
-                        std::cout << "" << std::endl;
-                        temp.push_back(&rb);
-                        m_bodies->erase(m_bodies->begin()+j);
-                    }
-                }
-
-                std::cout << "---" << std::endl;
-                std::cout << temp.size() << std::endl;
-                if(temp.size() == 1) //if only one rb is within the node
-                {
-                    subNodes[i] = OctreeNode(newPos, m_size * 0.5f, this, i);
-                    subNodes[i].m_bodies->push_back(*temp.back());
-                }
-                if(temp.size() > 1) //if more than one rb is within the node
-                {
-                    subNodes[i] = OctreeNode(newPos, m_size * 0.5f, this, i);
-                    for(int k = 0; k < temp.size(); k++)
-                        subNodes[i].m_bodies->push_back(*temp.at(k));
-                    if(depth>1)
-                        subNodes[i].update(depth-1);
-                }
-            }
-        } 
-*/
-       /* vector<int> getFullId()
-        {
-            vector<int> x;
-            OctreeNode * parent;
-            parent = m_parent;
-            x.push_back(m_id);
-            while(parent != NULL)
-            {
-                x.push_back(parent->m_id);
-                parent = parent->m_parent;
-            }
-
-            return x;
-        } */
-
         bool isLeaf()
         {
             return m_isLeaf;
         }
 
-        void getLeafsContainingMoreThanOneObject(vector<OctreeNode*> *result)
+        void getLeafsWithObj(vector<OctreeNode*> *result)
         {
             for(int i = 0; i < this->m_subNodes.size(); i++)
             {

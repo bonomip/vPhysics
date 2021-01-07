@@ -47,6 +47,11 @@ public:
         m_worldSize = worldSize;
     }
 
+    int getId()
+    {
+        return m_id;
+    }
+
     void update(const float &dt)
     {
         vec3 new_acc = apply_gravity()+m_forces / m_mass;
