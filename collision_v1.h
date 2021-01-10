@@ -10,6 +10,7 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #include <physics/verlet/verlet_rb_v1.h>
 #include <physics/response_v1.h>
+#include <physics/verlet/box_rb_v1.h>
 
 class Collision
 {
@@ -21,6 +22,7 @@ class Collision
     vector<int> apId, bpId ; //particle's ID of A, B
     vector<vec3> apPos, bpPos; //new Position of particles A, B
     vector<Response*> resp;
+    Box bb;
 
 
     Collision(vRigidBody* pt_a, box<vRigidBody> a, vRigidBody* pt_b, box<vRigidBody> b, vec3 n)

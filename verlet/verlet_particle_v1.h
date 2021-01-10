@@ -11,9 +11,6 @@ Real-Time Graphics Programming's Project - 2019/2020
 //GLM classes used in the application
 #include <glm/glm.hpp>
 
-//Physics class
-#include <physics/verlet/verlet_physics_v1.h>
-
 class vParticle
 {
     typedef glm::vec3 vec3;

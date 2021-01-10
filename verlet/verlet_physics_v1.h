@@ -12,6 +12,7 @@ using namespace std;
 
 //Physics class
 #include <physics/verlet/verlet_rb_v1.h>
+#include <physics/verlet/box_rb_v1.h>
 #include <physics/collision_solver_v1.h>
 
 //vector classw

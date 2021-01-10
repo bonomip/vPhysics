@@ -13,7 +13,6 @@ Real-Time Graphics Programming's Project - 2019/2020
 #include "glm/ext.hpp"
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/gtx/string_cast.hpp"
-#include <physics/verlet/verlet_physics_v1.h>
 #include <physics/verlet/verlet_particle_v1.h>
 #include <physics/verlet/verlet_connection_v1.h>
 #include <vector>
@@ -40,6 +39,8 @@ class vRigidBody
     vector<vConnection> m_connections;
 
 public:
+    vRigidBody(){}
+
     vRigidBody(const int &id,const int &kind,const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
     {
         m_scale = scale;
@@ -111,14 +112,6 @@ public:
 
         }
     }
-
-    /*virtual ~vRigidBody()
-    {
-        //delete[] m_diffuseColor;
-        //m_diffuseColor = NULL;
-        //vector<vParticle>().swap(m_particles);
-        //vector<vConnection>().swap(m_connections); 
-    }*/
 
     int getId()
     {
