@@ -38,8 +38,6 @@ class vRigidBody
     vector<vConnection> m_connections;
 
 public:
-    vRigidBody(){}
-
     vRigidBody(const int &id,const int &kind,const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
     {
         m_scale = scale;
@@ -49,6 +47,8 @@ public:
         m_id = id;
         m_diffuseColor = new GLfloat[3]{color[0], color[1], color[2]};
     }
+
+    virtual ~vRigidBody() {}
 
     int getId()
     {
@@ -84,20 +84,20 @@ public:
         return &m_connections;
     }
 
-    virtual vec3 getPosition(){}
+    virtual vec3 getPosition() = 0;
 
-    virtual vec3 getLastPosition(){}
+    virtual vec3 getLastPosition() = 0;
 
-    virtual vec3 getXAxis(){}
+    virtual vec3 getXAxis() = 0;
 
-    virtual vec3 getYAxis(){}
+    virtual vec3 getYAxis() = 0;
 
-    virtual vec3 getZAxis(){}
+    virtual vec3 getZAxis() = 0;
 
-    virtual vector<vec3> getXYZAxis(){}
+    virtual vector<vec3> getXYZAxis() = 0;
 
     //return rotation from 0f 0f 0f to actual rotation
-    virtual glm::mat4 getRotation(){}
+    virtual glm::mat4 getRotation() = 0;
 
     int getKind()
     {
