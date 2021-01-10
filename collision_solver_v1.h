@@ -90,8 +90,8 @@ template <class RigidBody> class CollisionSolver
                         {
                             coltores = true;
                             vector<int> df = Collision::genId(pt_a->getId(), pt_b->getId());
-                            std::cout << "COLLISION DETECTION - UPDATE -> collision id " << df.at(0) << "." << df.at(1);
-                            std::cout << " in leaf number " << i << std::endl;
+                            //std::cout << "COLLISION SOLVER - UPDATE -> collision id " << df.at(0) << "." << df.at(1);
+                            //std::cout << " in leaf number " << i << std::endl;
                             addCollision(new Collision(pt_a, a, pt_b, b, n));
                         }
                 }
@@ -108,16 +108,6 @@ template <class RigidBody> class CollisionSolver
         }
         
     }
-
-    /*int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
-    {
-        return collisionResp->debugCollision(t, i, p, l);
-    }
-
-    int debugCollison2(vector<CollisionResponse<vRigidBody>::Response> &r)
-    {
-        return collisionResp->debugCollision(r);
-    }*/
 
     bool canAddColl(vector<int> col_id)
     {
@@ -151,10 +141,10 @@ template <class RigidBody> class CollisionSolver
             {
                 r->apply();
             });
-        clearDebug();    
-        updateDebug();
+        //clearDebug();    
+        //updateDebug();
         clearResp();
-        std::cout << "\t\t\tCOLLISION RESPONSE -> CLEAR DATA" << std::endl;
+        //std::cout << "\t\t\tCOLLISION SOLVER -> CLEAR DATA" << std::endl;
     }
 
     void clearResp()
@@ -172,23 +162,6 @@ template <class RigidBody> class CollisionSolver
     {
         resp.swap(debug);
     }
-   
-    /*
-    int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
-    { 
-        int n = 0;
-        for_each(debug.begin(), debug.end(),
-            [&](Response* r)
-            {
-                n +=r->debugCollision(t, i, p, l);
-            });
-        return n;
-    }
-
-    int debugCollision2(vector<CollisionResponse<vRigidBody>::Response> &r)
-    {
-
-    } */
 
     void debugOctree(vector<class Octree<RigidBody>::OctreeNode*> *nodes)
     {   
