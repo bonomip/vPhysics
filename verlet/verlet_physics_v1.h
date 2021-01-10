@@ -52,7 +52,7 @@ public:
 
     void addRigidBody(int id, int kind, vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
-        vRigidBody *ptr = new vRigidBody(id, kind, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize); 
+        vRigidBody *ptr = new Box(id, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize); 
         m_rBodies.push_back(ptr);
         m_collisionDetection->addRigidBody(ptr);
     }

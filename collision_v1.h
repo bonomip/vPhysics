@@ -22,7 +22,6 @@ class Collision
     vector<int> apId, bpId ; //particle's ID of A, B
     vector<vec3> apPos, bpPos; //new Position of particles A, B
     vector<Response*> resp;
-    Box bb;
 
 
     Collision(vRigidBody* pt_a, box<vRigidBody> a, vRigidBody* pt_b, box<vRigidBody> b, vec3 n)
