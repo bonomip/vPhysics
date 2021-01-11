@@ -1,9 +1,10 @@
 #pragma once
 
 #include <physics/verlet/verlet_rb_v1.h>
+#include <physics/octree_v1.h>
 
 
-class Box : public vRigidBody
+class Box : public vRigidBody, OctreeElemnts
 {
     public:
     Box(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
@@ -129,4 +130,10 @@ class Box : public vRigidBody
 
         return result;
     }
+
+    bool isMember(vec3 node_pos, float node_size)
+    {
+        
+    }
+
 };

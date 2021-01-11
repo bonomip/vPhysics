@@ -32,7 +32,7 @@ class vPhysics
 typedef glm::vec3 vec3;
 float m_worldSize;
 vector<vRigidBody*> m_rBodies;
-CollisionSolver<vRigidBody> * m_colSolv;
+CollisionSolver * m_colSolv;
 
 public:
     vPhysics(){}
@@ -41,34 +41,29 @@ public:
     {
         m_worldSize = worldSize; //world center is implicit at 0 0 0
 
-        m_colSolv = new CollisionSolver<vRigidBody>(worldSize);
+        m_colSolv = new CollisionSolver(worldSize);
     }
-
-    /*virtual ~vPhysics()
-    {
-        vector<vRigidBody>().swap(m_rBodies);
-    }*/
 
     void addRigidBody(int id, int kind, vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
         vRigidBody *ptr = new Box(id, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize); 
         m_rBodies.push_back(ptr);
-
-        m_colSolv->addRigidBody(ptr);
+        //m_colSolv->addRigidBody(ptr);
     }
 
     void cleanWorld()
     {
-        m_colSolv->clean();
-
         for(int i = 0; m_rBodies.size(); i++)
             delete m_rBodies.at(i);
 
         vector<vRigidBody*>().swap(m_rBodies);
+        m_colSolv->clean();
     }
 
     void step(float dt)
     {      
+        m_colSolv->setBodies(&m_rBodies);
+
         for_each(m_rBodies.begin(), m_rBodies.end(),
             [&](vRigidBody *body)
             {
