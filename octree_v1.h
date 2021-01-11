@@ -9,17 +9,16 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #include <glm/glm.hpp>
 #include <vector>
-#include <physics/struct_v1.h>
 
 using std::vector;
 using std::abs;
 using glm::dot;
-
+typedef glm::vec3 vec3;
 
 //In order to use the Octree Spatial Data Structure it's necessary
-//to extend the OctreeElements abstract class and implements its methods.
-class OctreeElements 
-{
+//to extend the OItem abstract class and implements its methods.
+class OItem 
+{   public:
     virtual bool isMember(vec3 node_pos, float node_size) = 0;
 };
 
@@ -37,7 +36,6 @@ public:
         bottomLeftBack,     //110   6
         bottomLeftFront,    //111   7
     };
-    typedef glm::vec3 vec3;
 
     class OctreeNode;
     OctreeNode * root;
@@ -50,16 +48,16 @@ public:
         m_depth = depth;
     }
 
-    void updateTree(vector<T*> elments)
+    void updateTree(vector<T*> elements)
     {
         root->clear();
-        root->update(elments, m_depth);
+        root->update(elements, m_depth);
     }
 
     void getLeafsWithObj(vector<OctreeNode*> *result)
     {
         if(root->m_isLeaf){
-            if(root->m_rBodies.size() > 1)
+            if(root->m_items.size() > 1)
                 result->push_back(root);
             return;
         }
@@ -79,7 +77,7 @@ public:
     {
 
     public:
-        vector<T*> m_rBodies;
+        vector<T*> m_items;
         vector<OctreeNode*> m_subNodes;
 
         float m_size;
@@ -100,11 +98,11 @@ public:
         }
 
         //we dont take in cosideration the case were the rigidbody are outside the root of the octree
-        void update(vector<T*> elments, const int &depth)
+        void update(vector<T*> elements, const int &depth)
         {
             if(depth == 0)
             {
-                this->m_rBodies = elments; 
+                this->m_items = elements; 
             } 
             else 
             {
@@ -121,31 +119,8 @@ public:
                     
                     //check thought all rigidbody in the scene if they collide with the node i
                     //if they collide we add the rigidbody reference to the temp list
-                    for(int j = 0; j < elments.size(); j++)
-                    { // for each rigid body in the scene
-
-                        T *pt = elments.at(j);
-                        box<T> a, b;
-
-                        //sub node
-                        a = box<T>::create(    newPos,
-                                        vec3(1.0f, .0f, .0f),
-                                        vec3(.0f, 1.0f, .0f),
-                                        vec3(.0f, .0f, 1.0f),
-                                        m_size*0.25f,
-                                        m_size*0.25f,
-                                        m_size*0.25f
-                                    );
-                        //rigidbody
-                        b = box<T>::create(pt);
-                        vec3 n;
-
-                        //check if rigidbody collide with the subnode
-                        if(box<T>::collide(a, b, n))
-                        {   //if they collide, add the rigidbody to the temp list of this subnode
-                            temp.push_back(pt);
-                        }
-                    }
+                    for(int j = 0; j < elements.size(); j++) // for each rigid body in the scene
+                        if(elements.at(j)->isMember(newPos, m_size)) temp.push_back(elements.at(j));
 
                     //if only one rigidbodies collides with the subnode. We create it, 
                     //but no further recursion is nedeed
@@ -186,7 +161,7 @@ public:
             {
                 if(this->m_subNodes.at(i)->isLeaf())
                 {
-                    if(this->m_subNodes.at(i)->m_rBodies.size() > 1)
+                    if(this->m_subNodes.at(i)->m_items.size() > 1)
                         result->push_back(this->m_subNodes.at(i));
                 }
                 else
@@ -212,7 +187,7 @@ public:
                 m_subNodes.at(i)->clear();
             }
             vector<OctreeNode*>().swap(m_subNodes);
-            vector<T*>().swap(m_rBodies);
+            vector<T*>().swap(m_items);
         }    
     };
 };

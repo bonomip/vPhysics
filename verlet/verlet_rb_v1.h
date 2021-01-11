@@ -13,12 +13,15 @@ Real-Time Graphics Programming's Project - 2019/2020
 #include "glm/ext.hpp"
 #include "glm/gtx/euler_angles.hpp"
 #include "glm/gtx/string_cast.hpp"
+#include <physics/octree_v1.h>
 #include <physics/verlet/verlet_particle_v1.h>
 #include <physics/verlet/verlet_connection_v1.h>
 #include <vector>
 #include <stdlib.h>
+#include <physics/struct_v1.h>
 
-class vRigidBody
+
+class vRigidBody : public OItem
 {
     protected:
     typedef glm::vec3 vec3;

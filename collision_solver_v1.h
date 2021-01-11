@@ -45,20 +45,25 @@ class CollisionSolver
 
     }
 
+    void freeMemory()
+    {
+        vector<Collision*>().swap(this->colls);
+        vector<class Octree<vRigidBody>::OctreeNode*>().swap(this->octreeLeafs);     
+    }
+
     void update() //called each physics step
     {
         clearResp();
+        freeMemory();
 
         //struct used for collision detection
         box<vRigidBody> a;
         box<vRigidBody> b;
 
-        vector<Collision*>().swap(this->colls);
-
-        //realease the memory
-        vector<class Octree<vRigidBody>::OctreeNode*>().swap(this->octreeLeafs);
         
         //update the tree
+        //vector<vRigidBody*>* m_rBodies;
+        //vector<OItem*> elements
         m_tree->updateTree(*m_rBodies);
         
         //we fetch the leafs of the tree (where rigidbodies are)
@@ -72,15 +77,15 @@ class CollisionSolver
             vRigidBody *pt_b;
             
             //check collision between all the rb in the leaf
-            for(int j = 0; j < octreeLeafs.at(i)->m_rBodies.size(); j++)
+            for(int j = 0; j < octreeLeafs.at(i)->m_items.size(); j++)
             {
                 //rigidbody A
-                pt_a = octreeLeafs.at(i)->m_rBodies.at(j);
+                pt_a = dynamic_cast<vRigidBody*>(octreeLeafs.at(i)->m_items.at(j));
                 a = box<vRigidBody>::create(pt_a);
-                for(int k = j+1; k < octreeLeafs.at(i)->m_rBodies.size(); k++)
+                for(int k = j+1; k < octreeLeafs.at(i)->m_items.size(); k++)
                 {
                     //rigidbody B
-                    pt_b = octreeLeafs.at(i)->m_rBodies.at(k);
+                    pt_b = dynamic_cast<vRigidBody*>(octreeLeafs.at(i)->m_items.at(k));
                     b = box<vRigidBody>::create(pt_b);
                     vec3 n;
                     

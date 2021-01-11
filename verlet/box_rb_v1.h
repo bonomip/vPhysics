@@ -1,10 +1,9 @@
 #pragma once
 
 #include <physics/verlet/verlet_rb_v1.h>
-#include <physics/octree_v1.h>
 
 
-class Box : public vRigidBody, OctreeElemnts
+class Box : public vRigidBody
 {
     public:
     Box(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
@@ -133,7 +132,23 @@ class Box : public vRigidBody, OctreeElemnts
 
     bool isMember(vec3 node_pos, float node_size)
     {
-        
+        box<vRigidBody> a, b;
+
+        //sub node
+        a = box<vRigidBody>::create(    node_pos,
+                        vec3(1.0f, .0f, .0f),
+                        vec3(.0f, 1.0f, .0f),
+                        vec3(.0f, .0f, 1.0f),
+                        node_size*0.25f,
+                        node_size*0.25f,
+                        node_size*0.25f
+                    );
+        //rigidbody
+        b = box<vRigidBody>::create(this);
+        vec3 n;
+
+        //check if rigidbody collide with the subnode
+        return box<vRigidBody>::collide(a, b, n);
     }
 
 };
