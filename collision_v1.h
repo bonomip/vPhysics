@@ -15,7 +15,6 @@ class Collision
 {
     public:
     vRigidBody *pt_a, *pt_b;
-    box<vRigidBody> a, b;
     vec3 normal;
     vector<int> m_id;
     vector<int> apId, bpId ; //particle's ID of A, B
@@ -23,19 +22,17 @@ class Collision
     vector<Response*> resp;
 
 
-    Collision(vRigidBody* pt_a, box<vRigidBody> a, vRigidBody* pt_b, box<vRigidBody> b, vec3 n)
+    Collision(vRigidBody* pt_a, vRigidBody* pt_b, vec3 n)
     {
         this->pt_a = pt_a;
         this->pt_b = pt_b;
-        this->a = a;
-        this->b = b; 
         this->normal = n;
         this->m_id = genId(pt_a->getId(), pt_b->getId());
 
         //std::cout << "\t\tCOLLISION - EVALUATE - 1 halfeval" << std::endl;
-        halfEval(pt_a, pt_b, b, pt_b->getId());
+        //halfEval(pt_a, pt_b, pt_b->getId());
         //std::cout << "\t\tCOLLISION - EVALUATE - 2 halfeval" << std::endl;
-        halfEval(pt_b, pt_a, a, pt_a->getId());
+        //halfEval(pt_b, pt_a, pt_a->getId());
     }
 
     private:
@@ -81,12 +78,12 @@ class Collision
         }
     };
 
-    void halfEval(vRigidBody * rb_a, vRigidBody * rb_b, box<vRigidBody> b, int b_id)
+   /* void halfEval(vRigidBody * rb_a, vRigidBody * rb_b, int b_id)
     {
         vec3 pp; //patricle position
         float px, py, pz;
         vector<triangle> tris;
-        b.getTrianglesfromBox(tris, b);
+        rb_b->getBox().getTrianglesfromBox(tris, rb_b->getBox();
         for(int i = 0; i < rb_a->getParticles()->size(); i++)
         {   //for each particles of A
             pp = rb_a->getParticles()->at(i).getPosition();
@@ -148,7 +145,7 @@ class Collision
             }   
         }
     } 
-    
+    */
     static vector<int> genId2(int a, int b)
     {
         vector<int> id; id.push_back(a); id.push_back(b);

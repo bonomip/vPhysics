@@ -55,49 +55,37 @@ class CollisionSolver
     {
         clearResp();
         freeMemory();
-
-        //struct used for collision detection
-        box<vRigidBody> a;
-        box<vRigidBody> b;
-
         
         //update the tree
-        //vector<vRigidBody*>* m_rBodies;
-        //vector<OItem*> elements
         m_tree->updateTree(*m_rBodies);
         
         //we fetch the leafs of the tree (where rigidbodies are)
         //only leaf containing more than one rigidbody are returned 
         m_tree->getLeafsWithObj(&octreeLeafs);
         
+        vRigidBody *pt_a, *pt_b;
+
         //for each leafs we check if there are collision between the rigidbodies inside it
         for(int i = 0; i < octreeLeafs.size(); i++)
         {
-            vRigidBody *pt_a;
-            vRigidBody *pt_b;
-
-            //vRigidBody::collide(pt_a, pt_b);
             //check collision between all the rb in the leaf
             for(int j = 0; j < octreeLeafs.at(i)->m_items.size(); j++)
-            {
-                //rigidbody A
+            {   //rigidbody A
                 pt_a = dynamic_cast<vRigidBody*>(octreeLeafs.at(i)->m_items.at(j));
-                a = box<vRigidBody>::create(pt_a);
+
                 for(int k = j+1; k < octreeLeafs.at(i)->m_items.size(); k++)
-                {
-                    //rigidbody B
+                {   //rigidbody B
                     pt_b = dynamic_cast<vRigidBody*>(octreeLeafs.at(i)->m_items.at(k));
-                    b = box<vRigidBody>::create(pt_b);
-                    vec3 n;
+                    vec3 intersection;
             
                     if( canAddColl(Collision::genId(pt_a->getId(), pt_b->getId())) )
-                        if(box<vRigidBody>::collide(a, b, n))
+                        if(vRigidBody::collide(pt_a, pt_b, intersection))
                         {
                             coltores = true;
                             vector<int> df = Collision::genId(pt_a->getId(), pt_b->getId());
                             //std::cout << "COLLISION SOLVER - UPDATE -> collision id " << df.at(0) << "." << df.at(1);
                             //std::cout << " in leaf number " << i << std::endl;
-                            addCollision(new Collision(pt_a, a, pt_b, b, n));
+                            addCollision(new Collision(pt_a, pt_b, intersection));
                         }
                 }
             }
