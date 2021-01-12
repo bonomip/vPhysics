@@ -48,10 +48,10 @@ public:
         m_depth = depth;
     }
 
-    void updateTree(vector<T*> elements)
+    void updateTree(vector<T*> items)
     {
         root->clear();
-        root->update(elements, m_depth);
+        root->update(items, m_depth);
     }
 
     void getLeafsWithObj(vector<OctreeNode*> *result)
@@ -98,11 +98,11 @@ public:
         }
 
         //we dont take in cosideration the case were the rigidbody are outside the root of the octree
-        void update(vector<T*> elements, const int &depth)
+        void update(vector<T*> items, const int &depth)
         {
             if(depth == 0)
             {
-                this->m_items = elements; 
+                this->m_items = items; 
             } 
             else 
             {
@@ -117,12 +117,12 @@ public:
                     newPos.y = ((i & 4) == 4) ? newPos.y - this->m_size*0.25f : newPos.y + this->m_size*0.25f;
                     newPos.z = ((i & 1) == 1) ? newPos.z + this->m_size*0.25f : newPos.z - this->m_size*0.25f;
                     
-                    //check thought all rigidbody in the scene if they collide with the node i
-                    //if they collide we add the rigidbody reference to the temp list
-                    for(int j = 0; j < elements.size(); j++) // for each rigid body in the scene
-                        if(elements.at(j)->isMember(newPos, m_size)) temp.push_back(elements.at(j));
+                    //check thought all items if they are member with the node i
+                    //if its so we add the item reference to the temp list
+                    for(int j = 0; j < items.size(); j++)
+                        if(items.at(j)->isMember(newPos, m_size)) temp.push_back(items.at(j));
 
-                    //if only one rigidbodies collides with the subnode. We create it, 
+                    //if only one item is memeber with the subnode. Create the node, add the item, 
                     //but no further recursion is nedeed
                     if(temp.size() == 1)
                     {
@@ -132,8 +132,8 @@ public:
                         //and we pass to the next subnode
                         continue;
                     }
-                    //if more then one rigidbody collides with the subnode, we create it
-                    //and we recursively update the branch
+                    //if more then one item is member with the subnode -> create the subnode
+                    //and recursively update the branch
                     if(temp.size() > 1)
                     {
                         this->m_isLeaf = false;

@@ -10,7 +10,6 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #include <physics/verlet/verlet_rb_v1.h>
 #include <physics/response_v1.h>
-#include <physics/verlet/box_rb_v1.h>
 
 class Collision
 {

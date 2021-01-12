@@ -75,7 +75,8 @@ class CollisionSolver
         {
             vRigidBody *pt_a;
             vRigidBody *pt_b;
-            
+
+            //vRigidBody::collide(pt_a, pt_b);
             //check collision between all the rb in the leaf
             for(int j = 0; j < octreeLeafs.at(i)->m_items.size(); j++)
             {
@@ -88,7 +89,7 @@ class CollisionSolver
                     pt_b = dynamic_cast<vRigidBody*>(octreeLeafs.at(i)->m_items.at(k));
                     b = box<vRigidBody>::create(pt_b);
                     vec3 n;
-                    
+            
                     if( canAddColl(Collision::genId(pt_a->getId(), pt_b->getId())) )
                         if(box<vRigidBody>::collide(a, b, n))
                         {
