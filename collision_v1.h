@@ -10,11 +10,13 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #include <physics/verlet/verlet_rb_v1.h>
 #include <physics/response_v1.h>
+#include <physics/tools_v1.h>
 
 class Collision
 {
     public:
     vRigidBody *pt_a, *pt_b;
+
     vec3 normal;
     vector<int> m_id;
     vector<int> apId, bpId ; //particle's ID of A, B
@@ -22,28 +24,26 @@ class Collision
     vector<Response*> resp;
 
 
-    Collision(vRigidBody* pt_a, vRigidBody* pt_b, vec3 n)
+    Collision(vRigidBody* a, vRigidBody* b, vec3 n)
     {
-        this->pt_a = pt_a;
-        this->pt_b = pt_b;
+        this->pt_a = a;
+        this->pt_b = b;
         this->normal = n;
         this->m_id = genId(pt_a->getId(), pt_b->getId());
 
-        //std::cout << "\t\tCOLLISION - EVALUATE - 1 halfeval" << std::endl;
-        //halfEval(pt_a, pt_b, pt_b->getId());
-        //std::cout << "\t\tCOLLISION - EVALUATE - 2 halfeval" << std::endl;
-        //halfEval(pt_b, pt_a, pt_a->getId());
+        //std::cout << "\t\tCOLLISION - EVALUATE" << std::endl;
+        evaluate();
     }
 
     private:
 
     struct triangleResp
     {
-        triangle tri;
+        vRigidBody::triangle tri;
         vec3 direction;
         vec3 intersection;
 
-        triangleResp static create(triangle t, vec3 dir, vec3 intersect)
+        triangleResp static create(vRigidBody::triangle t, vec3 dir, vec3 intersect)
         {
             triangleResp tr;
             tr.tri = t;
@@ -78,14 +78,16 @@ class Collision
         }
     };
 
-   /* void halfEval(vRigidBody * rb_a, vRigidBody * rb_b, int b_id)
-    {
-        vec3 pp; //patricle position
-        float px, py, pz;
-        vector<triangle> tris;
-        rb_b->getBox().getTrianglesfromBox(tris, rb_b->getBox();
+    void evaluate(Box * rb_a, Box * rb_b)
+        {
+            vec3 pp; //patricle position
+            float px, py, pz;
+            vector<vRigidBody::triangle> tris;
+            vRigidBody::box b = rb_b->getBox();
+            vRigidBody::box::getTrianglesfromBox(tris, rb_b->getBox());
+        
         for(int i = 0; i < rb_a->getParticles()->size(); i++)
-        {   //for each particles of A
+        { //for each particles of A
             pp = rb_a->getParticles()->at(i).getPosition();
 
             vec3 v = pp-b.position;
@@ -93,6 +95,7 @@ class Collision
             px = std::abs(glm::dot(v, b.x));
             py = std::abs(glm::dot(v, b.y));
             pz = std::abs(glm::dot(v, b.z));
+            
             if(px <= b.w && py <= b.h && pz <= b.d) //the i-th patricle of A is inside B
             {   
                 //std::cout << "\t\tCOLLISION - halfEval -> collision id " <<  m_id.at(0) << "." << m_id.at(1) << " patricle " << rb_a->getParticles()->at(i).m_id << " of rb_a " << rb_a->getParticles()->at(i).m_rbid;
@@ -103,12 +106,12 @@ class Collision
                     vec3 rayDir = normalize(pp-rb_a->getParticles()->at(i).getLastPosition()); //patricle position - patricle last position
                     vec3 origin = rb_a->getParticles()->at(i).getLastPosition()+(rayDir*(-2.0f)); //the origin is put far away from the collision point
 
-                    if(triangle::rejectTri(rayDir, tris.at(j))){
+                    if(vRigidBody::triangle::rejectTri(rayDir, tris.at(j))){
                         //std::cout << "\tCOLLISION_RESPONSE - halfEval -> rejected triangle" << std::endl;
                         continue;
                     }
 
-                    if(triangle::rayIntersect(origin, rayDir, tris.at(j), q))
+                    if(vRigidBody::triangle::rayIntersect(origin, rayDir, tris.at(j), q))
                     {
                         //std::cout << "\tCOLLISION - halfEval -> found collision points" << std::endl;
                 
@@ -144,8 +147,17 @@ class Collision
                 }
             }   
         }
-    } 
-    */
+    }
+
+    void evaluate()
+    {
+        if ( this->pt_a->isBox() && this->pt_b->isBox() )
+        {
+            evaluate(dynamic_cast<Box*>(this->pt_a), dynamic_cast<Box*>(this->pt_b));
+            evaluate(dynamic_cast<Box*>(this->pt_b), dynamic_cast<Box*>(this->pt_a));
+        }
+    }
+
     static vector<int> genId2(int a, int b)
     {
         vector<int> id; id.push_back(a); id.push_back(b);

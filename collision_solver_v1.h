@@ -10,7 +10,6 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #include <physics/verlet/verlet_physics_v1.h>
 #include <physics/octree_v1.h>
-#include <physics/struct_v1.h>
 #include <physics/collision_v1.h>
 
 class CollisionSolver
@@ -113,6 +112,7 @@ class CollisionSolver
     {   
         collisionId.push_back( Collision::genId( c->pt_a->getId(),c->pt_b->getId() ) );
         addResponses(*c);
+        delete c;
     } 
 
     void addResponses(Collision c)

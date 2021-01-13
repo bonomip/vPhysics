@@ -8,7 +8,6 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 #pragma once
 
-#include <physics/struct_v1.h>
 #include <physics/verlet/verlet_particle_v1.h>
 #include <physics/collision_solver_v1.h>
 #include <physics/collision_v1.h>

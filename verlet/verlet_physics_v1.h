@@ -20,8 +20,6 @@ using namespace std;
 //OpenGL extension
 #include <glad/glad.h>
 
-#include <physics/struct_v1.h>
-
 class vPhysics
 {
 
