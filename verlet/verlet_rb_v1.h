@@ -22,6 +22,7 @@ Real-Time Graphics Programming's Project - 2020/2021
 #include <stdlib.h>
 
 class Box;
+class Sphere;
 
 class vRigidBody : public OItem
 {
@@ -396,21 +397,15 @@ public:
 
     void update(float dt)
     {
-        for_each(m_particles.begin(), m_particles.end(),
-            [&](vParticle &p)
-            {
-                p.update(dt);
-            });
+        if(m_kind == 0) for_each(m_particles.begin(), m_particles.end(), [&](vParticle &p) { p.update(dt); } );
+        if(m_kind == 1) static_cast<SphereParticle&>(m_particles.at(0)).update(dt);
     }  
 
     void updateConstraint()
     {
-        for(int i = 0; i < 2; i++) 
-            for_each(m_connections.begin(), m_connections.end(),
-                [&](vConnection &c)
-                {
-                    c.enforceConstraint();
-                });
+        if(m_kind == 1) return;
+        
+        for(int i = 0; i < 2; i++) for_each(m_connections.begin(), m_connections.end(), [&](vConnection &c) { c.enforceConstraint(); } );
     }      
 
     bool isBox(){ return m_kind == 0; }     // 0 for boxes
@@ -459,62 +454,26 @@ class Box : public vRigidBody
     Box(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
     : vRigidBody(id, 0,pos, color, e_rot, scale, mass, drag, useGravity, isKinematic, worldSize)
     {
-        this->m_kind = 0;
-
         vector<vec3> obj_pos;
 
-            obj_pos.push_back(vec3( scale.x,    scale.y,    scale.z     ));
-            obj_pos.push_back(vec3( -scale.x,   scale.y,    scale.z     ));
-            obj_pos.push_back(vec3( -scale.x,   scale.y,    -scale.z    ));
-            obj_pos.push_back(vec3( scale.x,    scale.y,    -scale.z    ));
-            obj_pos.push_back(vec3( scale.x,    -scale.y,   scale.z     ));
-            obj_pos.push_back(vec3( -scale.x,   -scale.y,   scale.z     ));
-            obj_pos.push_back(vec3( -scale.x,   -scale.y,   -scale.z    ));
-            obj_pos.push_back(vec3( scale.x,    -scale.y,   -scale.z    ));
+        obj_pos.push_back(vec3( scale.x,    scale.y,    scale.z     ));
+        obj_pos.push_back(vec3( -scale.x,   scale.y,    scale.z     ));
+        obj_pos.push_back(vec3( -scale.x,   scale.y,    -scale.z    ));
+        obj_pos.push_back(vec3( scale.x,    scale.y,    -scale.z    ));
+        obj_pos.push_back(vec3( scale.x,    -scale.y,   scale.z     ));
+        obj_pos.push_back(vec3( -scale.x,   -scale.y,   scale.z     ));
+        obj_pos.push_back(vec3( -scale.x,   -scale.y,   -scale.z    ));
+        obj_pos.push_back(vec3( scale.x,    -scale.y,   -scale.z    ));
 
-            glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
-            for(int i = 0; i < 8; i++){
-                glm::vec4 p = glm::vec4(obj_pos[i], 1) * rot;
-                m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize));
-            }
+        glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
+        for(int i = 0; i < 8; i++){
+            glm::vec4 p = glm::vec4(obj_pos[i], 1) * rot;
+            m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize));
+        }
 
-            //ORIZONTAL CONNECTION CLOCK WISE UP TO BOTTOM
-            m_connections.push_back(vConnection(&m_particles.at( 0 ),&m_particles.at( 1 )));
-            m_connections.push_back(vConnection(&m_particles.at( 1 ),&m_particles.at( 2 )));
-            m_connections.push_back(vConnection(&m_particles.at( 2 ),&m_particles.at( 3 )));
-            m_connections.push_back(vConnection(&m_particles.at( 3 ),&m_particles.at( 0 )));
-            m_connections.push_back(vConnection(&m_particles.at( 4 ),&m_particles.at( 5 )));
-            m_connections.push_back(vConnection(&m_particles.at( 5 ),&m_particles.at( 6 )));
-            m_connections.push_back(vConnection(&m_particles.at( 6 ),&m_particles.at( 7 )));
-            m_connections.push_back(vConnection(&m_particles.at( 7 ),&m_particles.at( 4 )));
-
-            //VERTICAL CONNECTION CLOCK WISE UP TO BOTTOM
-            m_connections.push_back(vConnection(&m_particles.at( 0 ),&m_particles.at( 4 )));
-            m_connections.push_back(vConnection(&m_particles.at( 1 ),&m_particles.at( 5 )));
-            m_connections.push_back(vConnection(&m_particles.at( 2 ),&m_particles.at( 6 )));
-            m_connections.push_back(vConnection(&m_particles.at( 3 ),&m_particles.at( 7 )));
-
-            //OBLIQUAL CONNECTION CLOCK WISE UP TO BOTTOM
-            m_connections.push_back(vConnection(&m_particles.at( 0 ),&m_particles.at( 6 )));
-            m_connections.push_back(vConnection(&m_particles.at( 1 ),&m_particles.at( 7 )));
-            m_connections.push_back(vConnection(&m_particles.at( 2 ),&m_particles.at( 4 )));
-            m_connections.push_back(vConnection(&m_particles.at( 3 ),&m_particles.at( 5 )));
-
-            //BOTTOM AND TOP SQUARE 
-            m_connections.push_back(vConnection(&m_particles.at( 0 ),&m_particles.at( 2 )));
-            m_connections.push_back(vConnection(&m_particles.at( 2 ),&m_particles.at( 3 )));
-            m_connections.push_back(vConnection(&m_particles.at( 4 ),&m_particles.at( 6 )));
-            m_connections.push_back(vConnection(&m_particles.at( 5 ),&m_particles.at( 7 )));
-
-            //LATERAL SQUARE
-            m_connections.push_back(vConnection(&m_particles.at( 0 ),&m_particles.at( 7 )));
-            m_connections.push_back(vConnection(&m_particles.at( 3 ),&m_particles.at( 4 )));
-            m_connections.push_back(vConnection(&m_particles.at( 3 ),&m_particles.at( 6 )));
-            m_connections.push_back(vConnection(&m_particles.at( 2 ),&m_particles.at( 7 )));
-            m_connections.push_back(vConnection(&m_particles.at( 1 ),&m_particles.at( 6 )));
-            m_connections.push_back(vConnection(&m_particles.at( 2 ),&m_particles.at( 5 )));
-            m_connections.push_back(vConnection(&m_particles.at( 0 ),&m_particles.at( 5 )));
-            m_connections.push_back(vConnection(&m_particles.at( 1 ),&m_particles.at( 4 )));
+        for(int i = 0; i < m_particles.size()-1; i ++)
+            for(int j = i+1; j < m_particles.size(); j++)
+                 m_connections.push_back(vConnection(&m_particles.at( i ),&m_particles.at( j )));
     }
 
     vec3 getPosition()
@@ -605,6 +564,73 @@ class Box : public vRigidBody
         return box::create(this);
     }
 };
+
+class Sphere : public vRigidBody
+{
+    public:
+    Sphere(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
+    : vRigidBody(id, 1, pos, color, e_rot, scale, mass, drag, useGravity, isKinematic, worldSize)
+    {
+
+        glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
+
+        glm::vec4 p = glm::vec4(vec3(.0f,.0f,.0f), 1) * rot; //sphere is made up by 1 patricles in its center
+
+        m_particles.push_back(SphereParticle(id, 0, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), scale.x, mass, drag, worldSize));
+    }
+
+    vec3 getPosition()
+    {
+        //The center of the box is calculated as the half distance between particles to the external counterparts
+        return m_particles.at(0).getPosition();
+    }
+
+    vec3 getLastPosition()    
+    {
+        return m_particles.at(0).getLastPosition();
+    }
+
+    vec3 getXAxis(){
+        return vec3(1.0f,.0f,.0f);
+    }
+
+    vec3 getYAxis(){
+        return vec3(.0f,1.0f,.0f);
+    }
+
+    vec3 getZAxis(){
+        return vec3(.0f,.0f,1.0f);
+    }
+
+    vector<vec3> getXYZAxis()
+    {
+        vector<vec3> v;
+        v.push_back(vec3(1.0f,.0f,.0f));
+        v.push_back(vec3(.0f,1.0f,.0f));
+        v.push_back(vec3(.0f,.0f,1.0f));
+        return v;
+    }
+
+    glm::mat4 getRotation() //return rotation from 0f 0f 0f to actual rotation
+    {
+        glm::mat4 result;
+
+        vector<vec3> axis = getXYZAxis();
+        
+        result[0] = glm::vec4(axis.at(0), 0);
+        result[1] = glm::vec4(axis.at(1), 0);
+        result[2] = glm::vec4(axis.at(2), 0);
+        result[3] = glm::vec4(0, 0, 0, 1);
+
+        return result;
+    }
+
+    bool isMember(vec3 node_pos, float node_size)
+    {
+        return false;
+    }
+};
+
 
 //COLLISION METHODS
 

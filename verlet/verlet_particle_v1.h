@@ -11,10 +11,12 @@ Real-Time Graphics Programming's Project - 2019/2020
 //GLM classes used in the application
 #include <glm/glm.hpp>
 
+typedef glm::vec3 vec3;
+
 class vParticle
 {
-    typedef glm::vec3 vec3;
 
+protected:
     vec3 m_pNow;
     vec3 m_pOld;
 
@@ -115,10 +117,39 @@ public:
     {
         return m_mass;
     }
-private:
+protected:
     vec3 apply_gravity()
     {
         return vec3(.0f, -9.81f, .0f)*m_mass;
     } 
 
+};
+
+class SphereParticle : public vParticle 
+{
+    public:
+    SphereParticle(const int &rb_id,const int &id,const vec3 &pos, const float &radius, const float &mass,const float &drag, const float worldSize) :
+    vParticle(rb_id, id, pos, mass, drag, worldSize){}
+
+    void update(const float &dt)
+    {
+        vec3 new_acc = apply_gravity()+m_forces / m_mass;
+        float dump = 1.0f-m_drag*dt;
+        vec3 new_pos = (1.0f+dump)*m_pNow - (dump)*m_pOld + new_acc * dt*dt;
+
+        //ENFORCE WORLD COSTRAIN
+        if(new_pos.y > m_worldSize) new_pos.y = m_worldSize;
+        if(new_pos.y < -m_worldSize) new_pos.y = -m_worldSize;
+
+        if(new_pos.x > m_worldSize) new_pos.x = m_worldSize;
+        if(new_pos.x < -m_worldSize) new_pos.x = -m_worldSize;
+
+        if(new_pos.z > m_worldSize) new_pos.z = m_worldSize;
+        if(new_pos.z < -m_worldSize) new_pos.z = -m_worldSize;
+
+        m_pOld = m_pNow;
+        m_pNow = new_pos;
+        m_dt = dt;
+        m_forces = vec3(0.0f,0.0f,0.0f);
+    }
 };

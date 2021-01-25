@@ -45,7 +45,7 @@ public:
         m_rBodies.push_back(new Box(m_rBodies.size(), pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize));
     }
 
-    void addSphere(vec3 pos, GLfloat* color, vec3 rot, float radius, float mass, float drag, bool useGravity, bool isKinematic)
+    void addSphere(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
        //todo
     }
