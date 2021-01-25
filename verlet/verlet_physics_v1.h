@@ -38,11 +38,14 @@ public:
         m_colSolv = new CollisionSolver(worldSize);
     }
 
-    void addRigidBody(int id, int kind, vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
+    void addBox(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
-        vRigidBody *ptr = new Box(id, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize); 
-        m_rBodies.push_back(ptr);
-        //m_colSolv->addRigidBody(ptr);
+        m_rBodies.push_back(new Box(0, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize));
+    }
+
+    void addSphere(vec3 pos, GLfloat* color, vec3 rot, float radius, float mass, float drag, bool useGravity, bool isKinematic)
+    {
+       //todo
     }
 
     void cleanWorld()
