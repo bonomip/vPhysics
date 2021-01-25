@@ -408,51 +408,43 @@ public:
                 });
     }      
 
-
     bool isBox(){ return m_kind == 0; }     // 0 for boxes
 
     bool isSphere(){ return m_kind == 1; }  // 1 for Spheres
 
+    vector<vParticle>* getParticles() { return &m_particles; }
+    
+    vector<vConnection>* getConnections() { return &m_connections; }
 
-    vector<vParticle>*      getParticles() { return &m_particles; }
-    
-    vector<vConnection>*    getConnections() { return &m_connections; }
+    vec3 getSize() { return m_scale; }
 
-    vec3                    getSize() { return m_scale; }
+    int getId() { return m_id; }
 
-    int                     getId() { return m_id; }
+    GLfloat* getColor() { return m_diffuseColor; }
 
-    GLfloat*                getColor() { return m_diffuseColor; }
+    virtual vec3 getPosition() = 0;
+    
+    virtual vec3 getLastPosition() = 0;
+    
+    virtual vec3 getXAxis() = 0;
+    
+    virtual vec3 getYAxis() = 0;
+    
+    virtual vec3 getZAxis() = 0;
+    
+    virtual vector<vec3> getXYZAxis() = 0;
+    
+    virtual glm::mat4 getRotation() = 0; //return rotation from 0f 0f 0f to actual rotation
 
-    virtual vec3            getPosition() = 0;
-    
-    virtual vec3            getLastPosition() = 0;
-    
-    virtual vec3            getXAxis() = 0;
-    
-    virtual vec3            getYAxis() = 0;
-    
-    virtual vec3            getZAxis() = 0;
-    
-    virtual vector<vec3>    getXYZAxis() = 0;
-    
-    virtual glm::mat4       getRotation() = 0; //return rotation from 0f 0f 0f to actual rotation
-
-    void                    setColor(GLfloat* color)
+    void setColor(GLfloat* color)
     {
         delete[] m_diffuseColor;
         m_diffuseColor = new GLfloat[3]{color[0], color[1], color[2]};
     }
 
-
-
     static bool collide(vRigidBody* a, vRigidBody* b, vec3 intersection);
 
     static bool collide(Box* a, Box* b, vec3 intersection);
-
-    //static bool collide(Box * a, Sphere * b);
-    
-    //static bool collide(Sphere * a, Sphere * b);
 
 };
 
@@ -478,7 +470,7 @@ class Box : public vRigidBody
             glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
             for(int i = 0; i < 8; i++){
                 glm::vec4 p = glm::vec4(obj_pos[i], 1) * rot;
-                m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass/8, drag, worldSize));
+                m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize));
             }
 
             //ORIZONTAL CONNECTION CLOCK WISE UP TO BOTTOM
@@ -606,11 +598,6 @@ class Box : public vRigidBody
     box getBox()
     {
         return box::create(this);
-    }
-
-    bool isPatricleInsideBox(int idx, Box * b)
-    {
-
     }
 };
 
