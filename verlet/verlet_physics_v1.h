@@ -26,6 +26,8 @@ class vPhysics
 typedef glm::vec3 vec3;
 float m_worldSize;
 vector<vRigidBody*> m_rBodies;
+
+static const int COLLISION_SOLVER = 1;
 CollisionSolver * m_colSolv;
 
 public:
@@ -35,12 +37,12 @@ public:
     {
         m_worldSize = worldSize; //world center is implicit at 0 0 0
 
-        m_colSolv = new CollisionSolver(worldSize);
+        if(COLLISION_SOLVER) m_colSolv = new CollisionSolver(worldSize);
     }
 
     void addBox(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
-        m_rBodies.push_back(new Box(0, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize));
+        m_rBodies.push_back(new Box(m_rBodies.size(), pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize));
     }
 
     void addSphere(vec3 pos, GLfloat* color, vec3 rot, float radius, float mass, float drag, bool useGravity, bool isKinematic)
@@ -54,20 +56,22 @@ public:
             delete m_rBodies.at(i);
 
         vector<vRigidBody*>().swap(m_rBodies);
-        m_colSolv->clean();
+        if(COLLISION_SOLVER) m_colSolv->clean();
     }
 
     void step(float dt)
     {      
-        m_colSolv->setBodies(&m_rBodies);
-
         for_each(m_rBodies.begin(), m_rBodies.end(),
             [&](vRigidBody *body)
             {
                 body->update(dt);
             });
 
-        m_colSolv->update();
+        if(COLLISION_SOLVER)
+        {
+            m_colSolv->setBodies(&m_rBodies);
+            m_colSolv->update();
+        }
 
         for_each(m_rBodies.begin(), m_rBodies.end(),
             [&](vRigidBody *body)
