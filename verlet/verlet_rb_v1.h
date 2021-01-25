@@ -377,6 +377,11 @@ class vRigidBody : public OItem
     vector<vConnection> m_connections;
 
 public:
+
+    vRigidBody(const vRigidBody& rb) = delete; //disallow copy
+    
+    vRigidBody& operator=(const vRigidBody& copy) = delete;
+
     vRigidBody(const int &id,const int &kind,const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
     {
         m_scale = scale;

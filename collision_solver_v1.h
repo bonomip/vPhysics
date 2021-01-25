@@ -89,15 +89,7 @@ class CollisionSolver
                 }
             }
         }
-        if(coltores)
-        { //if there are collision to resolve
-            //than we resolve the collisions
-            resolveCollisions();
-            coltores = false;
-        } else 
-        {
-            
-        }
+        resolveCollisions();
     }
 
     bool canAddColl(vector<int> col_id)
@@ -128,6 +120,8 @@ class CollisionSolver
 
     void resolveCollisions()
     {
+        if(!coltores) return;
+        coltores = false;
         for_each(resp.begin(), resp.end(),
             [&](Response* r)
             {
