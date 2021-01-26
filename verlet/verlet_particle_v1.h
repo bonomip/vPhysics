@@ -15,7 +15,7 @@ typedef glm::vec3 vec3;
 
 class vParticle
 {
-
+public:
 protected:
     vec3 m_pNow;
     vec3 m_pOld;
@@ -29,11 +29,19 @@ protected:
 
     float m_worldSize;
 
+    //for sphere particle
+    float m_radius;
+    float m_bounciness;
+
+    bool stop;
+
 public:
     int m_rbid, m_id; //rigidbody id, particle id 
 
     vParticle(const int &rb_id,const int &id,const vec3 &pos,const float &mass,const float &drag, const float worldSize)
     {
+        this->stop = false;
+
         m_pNow = pos;
         m_pOld = pos;
 
@@ -44,6 +52,11 @@ public:
         m_id = id;
 
         m_worldSize = worldSize;
+    }
+
+    bool getStop()
+    {
+        return this->stop;
     }
 
     int getId()
@@ -128,8 +141,13 @@ protected:
 class SphereParticle : public vParticle 
 {
     public:
-    SphereParticle(const int &rb_id,const int &id,const vec3 &pos, const float &radius, const float &mass,const float &drag, const float worldSize) :
-    vParticle(rb_id, id, pos, mass, drag, worldSize){}
+    SphereParticle(const int &rb_id,const int &id,const vec3 &pos, const float &radius, const float &mass,const float &drag, const float &bounciness, const float &worldSize) :
+    vParticle(rb_id, id, pos, mass, drag, worldSize)
+    {
+        this->m_radius = radius;
+        this->m_bounciness = bounciness;
+        //this->m_pOld = vec3(m_pOld.x+0.15f, m_pOld.y+0.15f, m_pOld.z);
+    }
 
     void update(const float &dt)
     {
@@ -137,19 +155,69 @@ class SphereParticle : public vParticle
         float dump = 1.0f-m_drag*dt;
         vec3 new_pos = (1.0f+dump)*m_pNow - (dump)*m_pOld + new_acc * dt*dt;
 
-        //ENFORCE WORLD COSTRAIN
-        if(new_pos.y > m_worldSize) new_pos.y = m_worldSize;
-        if(new_pos.y < -m_worldSize) new_pos.y = -m_worldSize;
-
-        if(new_pos.x > m_worldSize) new_pos.x = m_worldSize;
-        if(new_pos.x < -m_worldSize) new_pos.x = -m_worldSize;
-
-        if(new_pos.z > m_worldSize) new_pos.z = m_worldSize;
-        if(new_pos.z < -m_worldSize) new_pos.z = -m_worldSize;
-
+        enforceWorldConstraint(&new_pos);
+        
         m_pOld = m_pNow;
         m_pNow = new_pos;
+
         m_dt = dt;
         m_forces = vec3(0.0f,0.0f,0.0f);
+    }
+
+    void enforceWorldConstraint(vec3 *new_pos)
+    {
+        enforcePositive(new_pos->x, this->m_pNow.x, this->m_radius, this->m_worldSize ); //positive x
+        enforceNegative(new_pos->x, this->m_pNow.x, this->m_radius, this->m_worldSize ); //negative x
+        enforcePositive(new_pos->y, this->m_pNow.y, this->m_radius, this->m_worldSize ); //positive x
+        enforceNegative(new_pos->y, this->m_pNow.y, this->m_radius, this->m_worldSize ); //negative x
+        enforcePositive(new_pos->z, this->m_pNow.z, this->m_radius, this->m_worldSize ); //positive x
+        enforceNegative(new_pos->z, this->m_pNow.z, this->m_radius, this->m_worldSize ); //negative x
+    }
+
+    /*
+        s: new position
+        p: old position
+        r: radius
+        q: bound
+    */
+
+    void enforcePositive(float &s, float &p, float r, float q)
+    {
+        if(s + r > q )
+        {
+            if( s > q ) // first case -> point outside bound
+            {
+                std::cout << "verlet patricle enforce neg or pos -> not tested" << std::endl;
+                s = s - 2.0f*(s-q); // reflect new position respect q
+                p = p - 2.0f*(p-q); // reflect old position respect q
+            } else //second case -> point inside bound
+            {
+                p = (q - r) + (s - p)*this->m_bounciness;
+                s = q - r;
+            }
+        }
+    }
+
+    /*
+        s: new position
+        p: old position
+        r: radius
+        q: bound
+    */
+    void enforceNegative(float &s, float &p, float r, float q)
+    {
+        if(r - s > q )
+        {
+            if( -s > q ) // first case -> point outside bound
+            {
+                std::cout << "verlet patricle enforce neg or pos -> not tested" << std::endl;
+                s = s + 2.0f*(s+q); // reflect new position respect q
+                p = p + 2.0f*(p+q); // reflect old position respect q
+            } else //second case -> point inside bound //COMMON ONE
+            {
+                p = (r - q) + (s - p)*this->m_bounciness;
+                s = r - q;
+            }
+        }
     }
 };

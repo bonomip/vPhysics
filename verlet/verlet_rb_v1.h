@@ -568,15 +568,14 @@ class Box : public vRigidBody
 class Sphere : public vRigidBody
 {
     public:
-    Sphere(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
-    : vRigidBody(id, 1, pos, color, e_rot, scale, mass, drag, useGravity, isKinematic, worldSize)
+    Sphere(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const float &radius,const float &mass,const float &drag, const float &bounciness, const bool &useGravity,const bool &isKinematic, const float worldSize)
+    : vRigidBody(id, 1, pos, color, e_rot, vec3(radius, radius, radius), mass, drag, useGravity, isKinematic, worldSize)
     {
-
         glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
 
         glm::vec4 p = glm::vec4(vec3(.0f,.0f,.0f), 1) * rot; //sphere is made up by 1 patricles in its center
 
-        m_particles.push_back(SphereParticle(id, 0, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), scale.x, mass, drag, worldSize));
+        m_particles.push_back(SphereParticle(id, 0, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), radius, mass, drag, bounciness, worldSize));
     }
 
     vec3 getPosition()

@@ -45,9 +45,9 @@ public:
         m_rBodies.push_back(new Box(m_rBodies.size(), pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize));
     }
 
-    void addSphere(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
+    void addSphere(vec3 pos, GLfloat* color, vec3 rot, const float &radius, float mass, float drag, float bounciness, bool useGravity, bool isKinematic)
     {
-       //todo
+       m_rBodies.push_back(new Sphere(m_rBodies.size(), pos, color, rot, radius, mass, drag, bounciness, useGravity, isKinematic, m_worldSize));
     }
 
     void cleanWorld()
@@ -64,6 +64,7 @@ public:
         for_each(m_rBodies.begin(), m_rBodies.end(),
             [&](vRigidBody *body)
             {
+                if( body->getParticles()->at(0).getStop() ) return;
                 body->update(dt);
             });
 
