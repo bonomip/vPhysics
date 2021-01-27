@@ -374,6 +374,9 @@ class vRigidBody : public OItem
     bool m_useGravity;
     bool m_isKinematic;
 
+    vec3 m_start_pos;
+    vec3 m_start_rot;
+
     vector<vParticle> m_particles;
     vector<vConnection> m_connections;
 
@@ -421,6 +424,12 @@ public:
     int getId() { return this->m_id; }
 
     GLfloat* getColor() { return this->m_diffuseColor; }
+
+    vec3 getStartPos() //only for sphere to prevent bugs
+    {
+        return this->m_start_pos;
+    }
+
 
     virtual vec3 getPosition() = 0;
     
@@ -578,6 +587,9 @@ class Sphere : public vRigidBody
     Sphere(const int id, const vec3 pos, GLfloat* color, const vec3 e_rot, const float radius,const float mass,const float drag, const float bounciness, const bool useGravity,const bool isKinematic, const float &worldSize)
     : vRigidBody(id, 1, color, vec3(radius, radius, radius), useGravity, isKinematic)
     {
+        this->m_start_pos = pos;
+        this->m_start_rot = e_rot;
+
         glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
 
         glm::vec4 p = glm::vec4(vec3(.0f,.0f,.0f), 1) * rot; //sphere is made up by 1 patricles in its center
@@ -601,6 +613,11 @@ class Sphere : public vRigidBody
     vec3 getLastPosition()    
     {
         return m_particles.at(0).getLastPosition();
+    }
+
+    void reset()
+    {
+        this->m_particles.at(0).reset(this->m_start_pos);
     }
 
     vec3 getXAxis(){
@@ -657,8 +674,6 @@ inline bool vRigidBody::collide(Box* a, Box* b, vec3 intersection)
 {
     return box::collide(a->getBox(), b->getBox(), intersection);
 }
-
-//FW DEC
 
 inline vRigidBody::box vRigidBody::box::create(Box* pt)
 {

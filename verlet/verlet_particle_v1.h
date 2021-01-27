@@ -54,7 +54,7 @@ public:
         this->m_worldSize = worldSize;
     }
 
-    bool getStop()
+    bool getStop() //only for sphere to prevent bugs
     {
         return this->stop;
     }
@@ -104,6 +104,13 @@ public:
     void setPosition(vec3 pos)
     {
         this->m_pNow = pos;
+    }
+
+    void reset(vec3 pos) //only for sphere to prevent bugs
+    {
+        this->m_pNow = pos;
+        this->m_pOld = pos;
+        this->stop = false;
     }
 
     void setPositionConservingMomentum(vec3 p0)

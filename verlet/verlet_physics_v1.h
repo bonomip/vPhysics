@@ -56,6 +56,8 @@ public:
         //call the decostructor of each obj
         this->m_rBodies.clear();
 
+        this->m_countRb = 0;
+
         //make sure mem clear
         vector<vRigidBody*>().swap(this->m_rBodies);
 
@@ -66,24 +68,14 @@ public:
     {      
         for(int i = 0; i < this->m_rBodies.size(); i ++)
         {
-            if( this->m_rBodies.at(i)->getParticles()->at(0).getStop() )
-            {
-                continue;
-            }
             this->m_rBodies.at(i)->update(dt);
-        }
 
-        /*
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                if( body->getParticles()->at(0).getStop() ) 
-                {
-                    return;
-                }
-                body->update(dt);
-            });
-        */
+            if( this->m_rBodies.at(i)->getParticles()->at(0).getStop() 
+            { //only for sphere to prevent bugs
+                this->m_rBodies.at(i)->getParticles()->at(0).reset( this->m_rBodies.at(i)->getStartPos());
+                this->m_rBodies.at(i)->update(dt); //if its the first frame it will catch up
+            }
+        }
 
         if(COLLISION_SOLVER)
         {
@@ -91,11 +83,10 @@ public:
             m_colSolv->update();
         }
 
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                body->updateConstraint();
-            });
+        for(int i = 0; i < this->m_rBodies.size(); i ++)
+        {
+            this->m_rBodies.at(i)->updateConstraint();
+        }
     }
 
     vector<vRigidBody*>* getRigidBodies()
