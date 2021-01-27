@@ -19,7 +19,7 @@ typedef glm::vec3 vec3;
 //to extend the OItem abstract class and implements its methods.
 class OItem 
 {   public:
-    virtual bool isMember(vec3 node_pos, float node_size) = 0;
+    virtual bool isMember(vec3 node_pos, float node_side_size) = 0;
 };
 
 template <class T> class Octree
@@ -80,7 +80,7 @@ public:
         vector<T*> m_items;
         vector<OctreeNode*> m_subNodes;
 
-        float m_size;
+        float m_side_size;
         vec3 m_pos;
         OctreeNode * m_parent;
         int m_id;
@@ -91,7 +91,7 @@ public:
 
         OctreeNode(const vec3 &position, const float &size, OctreeNode * parent, int id)
         {
-            m_size = size;
+            m_side_size = size;
             m_pos = position;
             m_parent = parent;
             m_id = id;
@@ -111,23 +111,23 @@ public:
                 for(int i = 0; i < 8; i++)
                 { // for each subnode
 
-                    //find the position of the new subnode
+                    //find the center of the new subnode
                     newPos = this->m_pos;
-                    newPos.x = ((i & 2) == 2) ? newPos.x + this->m_size*0.25f : newPos.x - this->m_size*0.25f;
-                    newPos.y = ((i & 4) == 4) ? newPos.y - this->m_size*0.25f : newPos.y + this->m_size*0.25f;
-                    newPos.z = ((i & 1) == 1) ? newPos.z + this->m_size*0.25f : newPos.z - this->m_size*0.25f;
+                    newPos.x = ((i & 2) == 2) ? newPos.x + this->m_side_size*0.25f : newPos.x - this->m_side_size*0.25f;
+                    newPos.y = ((i & 4) == 4) ? newPos.y - this->m_side_size*0.25f : newPos.y + this->m_side_size*0.25f;
+                    newPos.z = ((i & 1) == 1) ? newPos.z + this->m_side_size*0.25f : newPos.z - this->m_side_size*0.25f;
                     
                     //check thought all items if they are member with the node i
                     //if its so we add the item reference to the temp list
                     for(int j = 0; j < items.size(); j++)
-                        if(items.at(j)->isMember(newPos, m_size)) temp.push_back(items.at(j));
+                        if(items.at(j)->isMember(newPos, m_side_size*0.5f)) temp.push_back(items.at(j));
 
                     //if only one item is memeber with the subnode. Create the node, add the item, 
                     //but no further recursion is nedeed
                     if(temp.size() == 1)
                     {
                         this->m_isLeaf = false;
-                        this->m_subNodes.push_back(new OctreeNode(newPos, this->m_size*0.5f, this, i));
+                        this->m_subNodes.push_back(new OctreeNode(newPos, this->m_side_size*0.5f, this, i));
                         vector<T*>().swap(temp);
                         //and we pass to the next subnode
                         continue;
@@ -137,7 +137,7 @@ public:
                     if(temp.size() > 1)
                     {
                         this->m_isLeaf = false;
-                        this->m_subNodes.push_back(new OctreeNode(newPos, this->m_size*0.5f, this, i));
+                        this->m_subNodes.push_back(new OctreeNode(newPos, this->m_side_size*0.5f, this, i));
                         this->m_subNodes.back()->update(temp, depth-1);
                         //we empty the temp vector
                         vector<T*>().swap(temp);
@@ -165,7 +165,7 @@ public:
                         result->push_back(this->m_subNodes.at(i));
                 }
                 else
-                    this->m_subNodes.at(i)->getLeafs(result);
+                    this->m_subNodes.at(i)->getLeafsWithObj(result);
             }
         }
 
