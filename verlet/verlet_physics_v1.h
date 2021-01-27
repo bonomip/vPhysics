@@ -93,4 +93,17 @@ public:
     {
         return &m_rBodies;
     }
+
+    //debug
+    void getOctreeNodes(vector<std::pair<vec3, vec3>> &result)
+    {
+        if(!COLLISION_SOLVER) return;
+
+        for_each(this->m_colSolv->octreeLeafs.begin(), this->m_colSolv->octreeLeafs.end(),
+        [&](Octree<vRigidBody>::OctreeNode *n)
+        {
+            result.push_back(std::make_pair(n->m_pos, vec3(n->m_side_size/2.0f, n->m_side_size/2.0f, n->m_side_size/2.0f)));
+        });
+    }
+
 };
