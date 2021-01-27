@@ -476,6 +476,13 @@ class Box : public vRigidBody
                 this->m_connections.push_back(vConnection(&this->m_particles.at( i ),&this->m_particles.at( j )));
     }
 
+    ~Box()
+    {
+        this->m_particles.clear();
+        this->m_connections.clear();
+        delete[] this->m_diffuseColor;
+    }
+
     vec3 getPosition()
     {
         //The center of the box is calculated as the half distance between particles to the external counterparts
@@ -576,6 +583,13 @@ class Sphere : public vRigidBody
         glm::vec4 p = glm::vec4(vec3(.0f,.0f,.0f), 1) * rot; //sphere is made up by 1 patricles in its center
 
         m_particles.push_back(SphereParticle(id, 0, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), radius, mass, drag, bounciness, worldSize));
+    }
+
+    ~Sphere()
+    {
+        this->m_particles.clear();
+        this->m_connections.clear();
+        delete[] this->m_diffuseColor;
     }
 
     vec3 getPosition()

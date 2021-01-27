@@ -12,6 +12,7 @@ Real-Time Graphics Programming's Project - 2019/2020
 #include <physics/octree_v1.h>
 #include <physics/collision_v1.h>
 
+//CHECK FREEMEM CLEAN AND ALL METHOD TO FREE UP MEMORY
 class CollisionSolver
 {
     public:
@@ -41,7 +42,13 @@ class CollisionSolver
 
     void clean()
     {
+        delete m_tree;
 
+        colcheck.clear();
+        vector<vector<int>>().swap(colcheck);
+
+        octreeLeafs.clear();
+        vector<class Octree<vRigidBody>::OctreeNode*>().swap(octreeLeafs);
     }
 
     void freeMemory()

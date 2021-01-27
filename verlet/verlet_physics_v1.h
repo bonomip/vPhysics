@@ -53,9 +53,10 @@ public:
 
     void cleanWorld()
     {
-        for(int i = 0; this->m_rBodies.size(); i++)
-            delete this->m_rBodies.at(i);
+        //call the decostructor of each obj
+        this->m_rBodies.clear();
 
+        //make sure mem clear
         vector<vRigidBody*>().swap(this->m_rBodies);
 
         if(COLLISION_SOLVER) this->m_colSolv->clean();
