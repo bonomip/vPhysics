@@ -137,6 +137,11 @@ public:
     {
         return this->m_mass;
     }
+
+    float getRadius()
+    {
+        return this->m_radius;
+    }
 protected:
     vec3 apply_gravity()
     {

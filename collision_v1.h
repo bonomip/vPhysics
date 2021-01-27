@@ -149,6 +149,11 @@ class Collision
         }
     }
 
+    void evaluate(Sphere *rb_a, Sphere * rb_b)
+    {
+        
+    }
+
     void evaluate()
     {
         if ( this->pt_a->isBox() && this->pt_b->isBox() )
@@ -156,6 +161,12 @@ class Collision
             evaluate(dynamic_cast<Box*>(this->pt_a), dynamic_cast<Box*>(this->pt_b));
             evaluate(dynamic_cast<Box*>(this->pt_b), dynamic_cast<Box*>(this->pt_a));
         }
+        if ( this->pt_a->isSphere() && this->pt_b->isSphere() )
+        {
+            evaluate(dynamic_cast<Sphere*>(this->pt_a), dynamic_cast<Sphere*>(this->pt_b));
+        }
+
+
     }
 
     static vector<int> genId2(int a, int b)
@@ -163,6 +174,7 @@ class Collision
         vector<int> id; id.push_back(a); id.push_back(b);
         return id;
     }
+    
     public:
     static vector<int> genId(int a, int b)
     {

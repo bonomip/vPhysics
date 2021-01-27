@@ -20,6 +20,7 @@ Real-Time Graphics Programming's Project - 2020/2021
 
 #include <vector>
 #include <stdlib.h>
+#include <cmath>
 
 class Box;
 class Sphere;
@@ -27,6 +28,16 @@ class Sphere;
 class vRigidBody : public OItem
 {
     public:
+
+    static float max(float a, float b)
+    {
+        return (a<b) ? b:a;
+    }
+
+    static float min(float a, float b)
+    {
+        return (a<b) ? a:b;
+    }
 
     struct triangle
     {
@@ -115,7 +126,7 @@ class vRigidBody : public OItem
     struct box
     {
         vec3 position, x, y, z; //position + axis
-        float w, h, d; //HALF SIZE
+        float w, h, d; //from center to side ( = half side)
         int id;
 
         static void getTrianglesfromBox(vector<triangle>& result, box a)
@@ -362,22 +373,55 @@ class vRigidBody : public OItem
             return a;
         }
 
-        static box createFromAxisAligned(vec3 pos, float size)
+        static box createFromAxisAligned(vec3 pos, float side_size)
         {
             return box::create( pos, 
                                 vec3(1.0f, .0f, .0f),
                                 vec3(.0f, 1.0f, .0f),
                                 vec3(.0f, .0f, 1.0f),
-                                size*0.25f,
-                                size*0.25f,
-                                size*0.25f 
+                                side_size*0.5f,
+                                side_size*0.5f,
+                                side_size*0.5f 
                             );
         }
     };
 
-    struct sphere{
-        vec3 position;
-        float radius;
+    struct sphere
+    {
+        vec3 pos;
+        float r;
+
+        static sphere create(vec3 position, float radius)
+        {
+            sphere s;
+            s.pos = position;
+            s.r = radius;
+            return s; 
+        }
+
+        //todo
+        static bool collide(sphere s, box b, vec3 intersection)
+        {
+            return false;
+        }
+
+        static bool collideAxisAligned(sphere s, box b)
+        {
+            float x = max( b.position.x - b.w, min( s.pos.x, b.w  + b.position.x ) );
+            float y = max( b.position.y - b.h, min( s.pos.y, b.h  + b.position.y ) );
+            float z = max( b.position.z - b.d, min( s.pos.z, b.d  + b.position.z ) );
+
+            //distanza^2
+            float distance = (x - s.pos.x)*(x - s.pos.x) + (y - s.pos.y)*(y - s.pos.y) + (z - s.pos.z)*(z - s.pos.z); 
+
+            return distance < s.r*s.r;
+        }
+
+        //todo
+        static bool collide(sphere s, sphere t, vec3 intersection)
+        {
+            return false;
+        }
     };
 
     protected:
@@ -447,7 +491,6 @@ public:
         return this->m_start_pos;
     }
 
-
     virtual vec3 getPosition() = 0;
     
     virtual vec3 getLastPosition() = 0;
@@ -471,6 +514,8 @@ public:
     static bool collide(vRigidBody* a, vRigidBody* b, vec3 intersection);
 
     static bool collide(Box* a, Box* b, vec3 intersection);
+
+    static bool collide(Sphere* a, Sphere* b, vec3 intersection);
 
 };
 
@@ -571,10 +616,10 @@ class Box : public vRigidBody
         return result;
     }
 
-    bool isMember(vec3 node_pos, float node_size)
+    bool isMember(vec3 node_pos, float node_side_size)
     {
         //sub node
-        box a = box::createFromAxisAligned(node_pos, node_size);
+        box a = box::createFromAxisAligned(node_pos, node_side_size);
         //rigidbody
         box b = box::create(this);
 
@@ -624,6 +669,16 @@ class Sphere : public vRigidBody
         return m_particles.at(0).getLastPosition();
     }
 
+    float getRadius()
+    {
+        return m_particles.at(0).getRadius();
+    }
+
+    sphere getSphere()
+    {
+        return sphere::create(this->getPosition(), this->getRadius());
+    }
+
     void reset()
     {
         this->m_particles.at(0).reset(this->m_start_pos);
@@ -664,34 +719,23 @@ class Sphere : public vRigidBody
         return result;
     }
 
-    bool isMember(vec3 node_pos, float node_size)
+    bool isMember(vec3 node_pos, float node_side_size)
     {
-        /*
-            // get box closest point to sphere center by clamping
-            var x = Math.max(box.minX, Math.min(sphere.x, box.maxX));
-            var y = Math.max(box.minY, Math.min(sphere.y, box.maxY));
-            var z = Math.max(box.minZ, Math.min(sphere.z, box.maxZ));
-
-            // this is the same as isPointInsideSphere
-            var distance = Math.sqrt((x - sphere.x) * (x - sphere.x) +
-                                    (y - sphere.y) * (y - sphere.y) +
-                                    (z - sphere.z) * (z - sphere.z));
-
-            return distance < sphere.radius;
-        */
-
-
-
-        return false;
+        box b = box::createFromAxisAligned(node_pos, node_side_size); 
+        return sphere::collideAxisAligned(this->getSphere(), b);
     }
 };
 
 
 //COLLISION METHODS
 
-inline bool vRigidBody::collide(vRigidBody* a, vRigidBody* b, vec3 intersection){
-    if ( a->isBox() && b->isBox() ) //check between two boxes
-        return Box::collide(dynamic_cast<Box*>(a), dynamic_cast<Box*>(b), intersection);
+inline bool vRigidBody::collide(vRigidBody* a, vRigidBody* b, vec3 intersection){ //method dispacher
+    if (a->isBox() && b->isBox()) return vRigidBody::collide(dynamic_cast<Box*>(a), dynamic_cast<Box*>(b), intersection);
+    if (a->isSphere() && b->isSphere()) return vRigidBody::collide(dynamic_cast<Sphere*>(a), dynamic_cast<Sphere*>(b), intersection);
+
+    //if (a->isBox() && b->isSphere()) return vRigidBody::collide(dynamic_cast<Box*>(a), dynamic_cast<Sphere*>(b), intersection);
+    //if (a->isSphere() && b->isBox()) return vRigidBody::collide(dynamic_cast<Box*>(b), dynamic_cast<Sphere*>(a), intersection);
+
     return false;
 };
 
@@ -700,6 +744,12 @@ inline bool vRigidBody::collide(Box* a, Box* b, vec3 intersection)
     return box::collide(a->getBox(), b->getBox(), intersection);
 }
 
+inline bool vRigidBody::collide(Sphere* a, Sphere* b, vec3 intersection)
+{
+    return sphere::collide(a->getSphere(), b->getSphere(), intersection);
+}
+
+//-----------
 inline vRigidBody::box vRigidBody::box::create(Box* pt)
 {
     vector<vec3> axis = pt->getXYZAxis();
