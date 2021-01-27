@@ -28,7 +28,7 @@ float m_worldSize;
 vector<vRigidBody*> m_rBodies;
 int m_countRb;
 
-static const int COLLISION_SOLVER = 0;
+static const int COLLISION_SOLVER = 1;
 CollisionSolver * m_colSolv;
 
 public:

@@ -28,11 +28,13 @@ class CollisionSolver
     Octree<vRigidBody> * m_tree;
     vector<vector<int>> colcheck;
     bool coltores = false;
+    int m_ws;
 
 
     CollisionSolver(const float &worldSize) //world center is implicit at 0 0 0
     {
-        this->m_tree = new Octree<vRigidBody>(this->octreeCenter, worldSize*2.0f, this->octreeDepth);
+        this->m_ws = worldSize;
+        this->m_tree = new Octree<vRigidBody>(this->octreeCenter, this->m_ws*2.0f, this->octreeDepth);
     }
 
     void setBodies(vector<vRigidBody*>* v)
@@ -43,6 +45,7 @@ class CollisionSolver
     void clean()
     {
         delete m_tree;
+        this->m_tree = new Octree<vRigidBody>(this->octreeCenter, this->m_ws*2.0f, this->octreeDepth);
 
         colcheck.clear();
         vector<vector<int>>().swap(colcheck);
