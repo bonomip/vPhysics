@@ -38,20 +38,20 @@ protected:
 public:
     int m_rbid, m_id; //rigidbody id, particle id 
 
-    vParticle(const int &rb_id,const int &id,const vec3 &pos,const float &mass,const float &drag, const float worldSize)
+    vParticle(int rb_id,int id,vec3 pos,float mass,float drag, float worldSize)
     {
         this->stop = false;
 
-        m_pNow = pos;
-        m_pOld = pos;
+        this->m_pNow = pos;
+        this->m_pOld = pos;
 
-        m_mass = mass;
-        m_drag = drag;
+        this->m_mass = mass;
+        this->m_drag = drag;
 
-        m_rbid = rb_id;
-        m_id = id;
+        this->m_rbid = rb_id;
+        this->m_id = id;
 
-        m_worldSize = worldSize;
+        this->m_worldSize = worldSize;
     }
 
     bool getStop()
@@ -61,10 +61,10 @@ public:
 
     int getId()
     {
-        return m_id;
+        return this->m_id;
     }
 
-    void update(const float &dt)
+    void update(float dt)
     {
         vec3 new_acc = apply_gravity()+m_forces / m_mass;
         float dump = 1.0f-m_drag*dt;
@@ -88,25 +88,25 @@ public:
 
     vec3 getPosition()
     {
-        return m_pNow;
+        return this->m_pNow;
     }
 
     vec3 getLastPosition()
     {
-        return m_pOld;
+        return this->m_pOld;
     }
 
     vec3 getVelocity()
     {
-        return (m_pNow-m_pOld)/m_dt;
+        return (this->m_pNow-this->m_pOld)/this->m_dt;
     }
 
-    void setPosition(const vec3 &pos)
+    void setPosition(vec3 pos)
     {
-        m_pNow = pos;
+        this->m_pNow = pos;
     }
 
-    void setPositionConservingMomentum(const vec3 &p0)
+    void setPositionConservingMomentum(vec3 p0)
     {
         /*vec3 v1 = (p0-m_pNow);
         float post = abs(glm::length(v1));
@@ -118,22 +118,22 @@ public:
         return;
         }*/
         //m_pOld = m_pNow;
-        m_pNow = p0;
+        this->m_pNow = p0;
     }
 
     float getDt()
     {
-        return m_dt;
+        return this->m_dt;
     }
 
     float getMass()
     {
-        return m_mass;
+        return this->m_mass;
     }
 protected:
     vec3 apply_gravity()
     {
-        return vec3(.0f, -9.81f, .0f)*m_mass;
+        return vec3(.0f, -9.81f, .0f)*this->m_mass;
     } 
 
 };
@@ -141,7 +141,7 @@ protected:
 class SphereParticle : public vParticle 
 {
     public:
-    SphereParticle(const int &rb_id,const int &id,const vec3 &pos, const float &radius, const float &mass,const float &drag, const float &bounciness, const float &worldSize) :
+    SphereParticle(int rb_id,int id,vec3 pos,float radius,float mass,float drag,float bounciness,float worldSize) :
     vParticle(rb_id, id, pos, mass, drag, worldSize)
     {
         this->m_radius = radius;
@@ -149,19 +149,19 @@ class SphereParticle : public vParticle
         //this->m_pOld = vec3(m_pOld.x+0.15f, m_pOld.y+0.15f, m_pOld.z);
     }
 
-    void update(const float &dt)
+    void update(float dt)
     {
-        vec3 new_acc = apply_gravity()+m_forces / m_mass;
-        float dump = 1.0f-m_drag*dt;
-        vec3 new_pos = (1.0f+dump)*m_pNow - (dump)*m_pOld + new_acc * dt*dt;
+        vec3 new_acc = this->apply_gravity()+this->m_forces / this->m_mass;
+        float dump = 1.0f-this->m_drag*dt;
+        vec3 new_pos = (1.0f+dump)*this->m_pNow - (dump)*this->m_pOld + new_acc * dt*dt;
 
         enforceWorldConstraint(&new_pos);
         
-        m_pOld = m_pNow;
-        m_pNow = new_pos;
+        this->m_pOld = this->m_pNow;
+        this->m_pNow = new_pos;
 
-        m_dt = dt;
-        m_forces = vec3(0.0f,0.0f,0.0f);
+        this->m_dt = dt;
+        this->m_forces = vec3(0.0f,0.0f,0.0f);
     }
 
     void enforceWorldConstraint(vec3 *new_pos)
@@ -187,9 +187,10 @@ class SphereParticle : public vParticle
         {
             if( s > q ) // first case -> point outside bound
             {
-                std::cout << "verlet patricle enforce neg or pos -> not tested" << std::endl;
+                std::cout << "verlet patricle enforce pos -> not tested rb_id:" << this->m_rbid << std::endl;
                 s = s - 2.0f*(s-q); // reflect new position respect q
                 p = p - 2.0f*(p-q); // reflect old position respect q
+                this->stop = true;
             } else //second case -> point inside bound
             {
                 p = (q - r) + (s - p)*this->m_bounciness;
@@ -210,9 +211,11 @@ class SphereParticle : public vParticle
         {
             if( -s > q ) // first case -> point outside bound
             {
-                std::cout << "verlet patricle enforce neg or pos -> not tested" << std::endl;
+                std::cout << "verlet patricle enforce neg -> not tested rb_id:" << this->m_rbid << std::endl;
                 s = s + 2.0f*(s+q); // reflect new position respect q
                 p = p + 2.0f*(p+q); // reflect old position respect q
+
+                this->stop = true;
             } else //second case -> point inside bound //COMMON ONE
             {
                 p = (r - q) + (s - p)*this->m_bounciness;

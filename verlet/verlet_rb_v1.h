@@ -383,44 +383,44 @@ public:
     
     vRigidBody& operator=(const vRigidBody& copy) = delete;
 
-    vRigidBody(const int &id,const int &kind,const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
+    vRigidBody(const int id,const int kind, GLfloat* color, const vec3 scale, const bool useGravity,const bool isKinematic)
     {
-        m_scale = scale;
-        m_useGravity = useGravity;
-        m_isKinematic = isKinematic;
-        m_kind = kind;
-        m_id = id;
-        m_diffuseColor = new GLfloat[3]{color[0], color[1], color[2]};
+        this->m_scale = scale;
+        this->m_useGravity = useGravity;
+        this->m_isKinematic = isKinematic;
+        this->m_kind = kind;
+        this->m_id = id;
+        this->m_diffuseColor = new GLfloat[3]{color[0], color[1], color[2]};
     }
 
     virtual ~vRigidBody() {}
 
     void update(float dt)
     {
-        if(m_kind == 0) for_each(m_particles.begin(), m_particles.end(), [&](vParticle &p) { p.update(dt); } );
-        if(m_kind == 1) static_cast<SphereParticle&>(m_particles.at(0)).update(dt);
+        if(this->m_kind == 0) for_each(this->m_particles.begin(), this->m_particles.end(), [&](vParticle &p) { p.update(dt); } );
+        if(this->m_kind == 1) static_cast<SphereParticle&>(this->m_particles.at(0)).update(dt);
     }  
 
     void updateConstraint()
     {
-        if(m_kind == 1) return;
+        if(this->m_kind == 1) return;
         
-        for(int i = 0; i < 2; i++) for_each(m_connections.begin(), m_connections.end(), [&](vConnection &c) { c.enforceConstraint(); } );
+        for(int i = 0; i < 2; i++) for_each(this->m_connections.begin(), this->m_connections.end(), [&](vConnection &c) { c.enforceConstraint(); } );
     }      
 
-    bool isBox(){ return m_kind == 0; }     // 0 for boxes
+    bool isBox(){ return this->m_kind == 0; }     // 0 for boxes
 
-    bool isSphere(){ return m_kind == 1; }  // 1 for Spheres
+    bool isSphere(){ return this->m_kind == 1; }  // 1 for Spheres
 
-    vector<vParticle>* getParticles() { return &m_particles; }
+    vector<vParticle>* getParticles() { return &this->m_particles; }
     
-    vector<vConnection>* getConnections() { return &m_connections; }
+    vector<vConnection>* getConnections() { return &this->m_connections; }
 
-    vec3 getSize() { return m_scale; }
+    vec3 getSize() { return this->m_scale; }
 
-    int getId() { return m_id; }
+    int getId() { return this->m_id; }
 
-    GLfloat* getColor() { return m_diffuseColor; }
+    GLfloat* getColor() { return this->m_diffuseColor; }
 
     virtual vec3 getPosition() = 0;
     
@@ -439,7 +439,7 @@ public:
     void setColor(GLfloat* color)
     {
         delete[] m_diffuseColor;
-        m_diffuseColor = new GLfloat[3]{color[0], color[1], color[2]};
+        this->m_diffuseColor = new GLfloat[3]{color[0], color[1], color[2]};
     }
 
     static bool collide(vRigidBody* a, vRigidBody* b, vec3 intersection);
@@ -451,8 +451,8 @@ public:
 class Box : public vRigidBody
 {
     public:
-    Box(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const vec3 &scale,const float &mass,const float &drag,const bool &useGravity,const bool &isKinematic, const float worldSize)
-    : vRigidBody(id, 0,pos, color, e_rot, scale, mass, drag, useGravity, isKinematic, worldSize)
+    Box(int id, vec3 pos, GLfloat* color, vec3 e_rot, vec3 scale, float mass,float drag, bool useGravity,bool isKinematic, float worldSize)
+    : vRigidBody(id, 0, color, scale, useGravity, isKinematic)
     {
         vector<vec3> obj_pos;
 
@@ -468,51 +468,51 @@ class Box : public vRigidBody
         glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
         for(int i = 0; i < 8; i++){
             glm::vec4 p = glm::vec4(obj_pos[i], 1) * rot;
-            m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize));
+            this->m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize));
         }
 
-        for(int i = 0; i < m_particles.size()-1; i ++)
-            for(int j = i+1; j < m_particles.size(); j++)
-                 m_connections.push_back(vConnection(&m_particles.at( i ),&m_particles.at( j )));
+        for(int i = 0; i < this->m_particles.size()-1; i ++)
+            for(int j = i+1; j < this->m_particles.size(); j++)
+                this->m_connections.push_back(vConnection(&this->m_particles.at( i ),&this->m_particles.at( j )));
     }
 
     vec3 getPosition()
     {
         //The center of the box is calculated as the half distance between particles to the external counterparts
-        return (m_particles.at(6).getPosition()+m_particles.at(0).getPosition())*0.5f;
+        return (this->m_particles.at(6).getPosition()+this->m_particles.at(0).getPosition())*0.5f;
     }
 
     vec3 getLastPosition()    
     {
-        return m_particles.at(0).getLastPosition()+
-                (m_particles.at(6).getLastPosition() - m_particles.at(0).getLastPosition())*.5f;
+        return this->m_particles.at(0).getLastPosition()+
+                (this->m_particles.at(6).getLastPosition() - this->m_particles.at(0).getLastPosition())*.5f;
     }
 
     vec3 getXAxis(){
-        vec3 v0 = m_particles.at(0).getPosition();
-        vec3 v1 = m_particles.at(1).getPosition();
+        vec3 v0 = this->m_particles.at(0).getPosition();
+        vec3 v1 = this->m_particles.at(1).getPosition();
         return glm::normalize(v0 - v1);
     }
 
     vec3 getYAxis(){
-        vec3 v0 = m_particles.at(0).getPosition();
-        vec3 v2 = m_particles.at(2).getPosition();
+        vec3 v0 = this->m_particles.at(0).getPosition();
+        vec3 v2 = this->m_particles.at(2).getPosition();
         
-        vec3 x = getXAxis();
+        vec3 x = this->getXAxis();
         return glm::normalize(glm::cross(x, v2-v0));
     }
 
     vec3 getZAxis(){
-        vec3 x = getXAxis();
-        vec3 y = getYAxis();
+        vec3 x = this->getXAxis();
+        vec3 y = this->getYAxis();
         return glm::cross(x, y);
     }
 
     vector<vec3> getXYZAxis()
     {
-        vec3 v0 = m_particles.at(0).getPosition();
-        vec3 v1 = m_particles.at(1).getPosition();
-        vec3 v2 = m_particles.at(2).getPosition();
+        vec3 v0 = this->m_particles.at(0).getPosition();
+        vec3 v1 = this->m_particles.at(1).getPosition();
+        vec3 v2 = this->m_particles.at(2).getPosition();
         vec3 x = glm::normalize(v0 - v1);
         vec3 y = glm::normalize(glm::cross(x, v2-v0));
         vec3 z = glm::cross(x, y);
@@ -528,7 +528,7 @@ class Box : public vRigidBody
     {
         glm::mat4 result;
 
-        vector<vec3> axis = getXYZAxis();
+        vector<vec3> axis = this->getXYZAxis();
         
         result[0] = glm::vec4(axis.at(0), 0);
         result[1] = glm::vec4(axis.at(1), 0);
@@ -568,8 +568,8 @@ class Box : public vRigidBody
 class Sphere : public vRigidBody
 {
     public:
-    Sphere(const int &id, const vec3 &pos, GLfloat* color, const vec3 &e_rot, const float &radius,const float &mass,const float &drag, const float &bounciness, const bool &useGravity,const bool &isKinematic, const float worldSize)
-    : vRigidBody(id, 1, pos, color, e_rot, vec3(radius, radius, radius), mass, drag, useGravity, isKinematic, worldSize)
+    Sphere(const int id, const vec3 pos, GLfloat* color, const vec3 e_rot, const float radius,const float mass,const float drag, const float bounciness, const bool useGravity,const bool isKinematic, const float &worldSize)
+    : vRigidBody(id, 1, color, vec3(radius, radius, radius), useGravity, isKinematic)
     {
         glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
 
