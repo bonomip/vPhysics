@@ -19,11 +19,9 @@ class Movable
     public:
 
     virtual ~Movable(){}
-
     virtual void setPosition(vec3 pos, vec3 old) = 0;
     virtual vec3 getPosition() = 0;
     virtual vec3 getLastPosition() = 0; 
-
 };
 
 class vParticle : public Movable
@@ -46,15 +44,29 @@ protected:
     float m_radius;
     float m_bounciness;
 
-    bool stop;
-
 public:
     int m_rbid, m_id; //rigidbody id, particle id 
 
+
+    ////// DEBUG ////////
+    
+    //used by sphere to handle wirde behaviour at initialization
+    bool stop = false;
+    //used by collision response to debug
+    bool stop2 = false;
+
+    //only for sphere to prevent bugs
+    void reset(vec3 pos) 
+    {
+        this->m_pNow = pos;
+        this->m_pOld = pos;
+        this->stop = false;
+    }
+   
+    ////////////////////
+
     vParticle(int rb_id,int id,vec3 pos,float mass,float drag, float worldSize)
     {
-        this->stop = false;
-
         this->m_pNow = pos;
         this->m_pOld = pos;
 
@@ -65,11 +77,6 @@ public:
         this->m_id = id;
 
         this->m_worldSize = worldSize;
-    }
-
-    bool getStop() //only for sphere to prevent bugs
-    {
-        return this->stop;
     }
 
     int getId()
@@ -123,28 +130,6 @@ public:
     {
         this->m_pNow = pos;
         this->m_pOld = old;
-    }
-
-    void reset(vec3 pos) //only for sphere to prevent bugs
-    {
-        this->m_pNow = pos;
-        this->m_pOld = pos;
-        this->stop = false;
-    }
-
-    void setPositionConservingMomentum(vec3 p0)
-    {
-        /*vec3 v1 = (p0-m_pNow);
-        float post = abs(glm::length(v1));
-        std::cout << "PARTICLE CHANGE POSITION" << std::endl;
-        if(post > 0.0f){
-        vec3 p1 = m_pNow;
-        m_pOld = m_pNow;
-        m_pNow = p1+(v1)*(glm::length(m_pNow-m_pOld)/glm::length(v1));
-        return;
-        }*/
-        //m_pOld = m_pNow;
-        this->m_pNow = p0;
     }
 
     float getDt()
@@ -205,15 +190,16 @@ class SphereParticle : public vParticle
         enforceNegative(new_pos->z, this->m_pNow.z, this->m_radius, this->m_worldSize ); //negative x
     }
 
-    /*
-        s: new position
-        p: old position
-        r: radius
-        q: bound
-    */
 
     void enforcePositive(float &s, float &p, float r, float q)
     {
+        /*
+            s: new position
+            p: old position
+            r: radius
+            q: bound
+        */
+
         if(s + r > q )
         {
             if( s > q ) // first case -> point outside bound
@@ -230,14 +216,15 @@ class SphereParticle : public vParticle
         }
     }
 
-    /*
-        s: new position
-        p: old position
-        r: radius
-        q: bound
-    */
+
     void enforceNegative(float &s, float &p, float r, float q)
     {
+        /*
+            s: new position
+            p: old position
+            r: radius
+            q: bound
+        */
         if(r - s > q )
         {
             if( -s > q ) // first case -> point outside bound

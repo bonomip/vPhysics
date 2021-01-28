@@ -78,6 +78,22 @@ class Collision
         }
     };
 
+    // a = current sphere position, a1 = adjusted sphere position, o = previous frame sphere position, nvel = velocity normalized
+    // &out_a = calculated current sphere position
+    // &out_o = calculated previous frame sphere position
+    static void foo(vec3 a, vec3 a1, vec3 o, vec3 nvel, vec3 &out_a, vec3& out_o)
+    {
+        //adjust factor
+        float s = glm::length(a-a1);
+        //velocity magnitude -> equal mass 
+        float d = glm::length(o-a);
+
+        //vec3 o1 = a + ( o - a ); usless due to the result
+
+        out_a = a1 + nvel * s;
+        out_o = out_a - nvel * d;
+    }
+
     void evaluate(Box * rb_a, Box * rb_b)
         {
             vec3 pp; //patricle position
@@ -155,41 +171,102 @@ class Collision
 
     void evaluate(Sphere *rb_a, Sphere * rb_b)
     {
-        vec3 a, b;      //position before collision             //constant
-        vec3 a1, b1;    // position after collision
-        vec3 oa, ob;    // last step position before collision  //constant
-        vec3 oa1, ob1;  //last step position after collision
-        float ra, rb;   // radius of A and B                    //constant
-
-        a = rb_a->getPosition(); oa = rb_a->getLastPosition(); ra = rb_a->getRadius();
-        b = rb_b->getPosition(); ob = rb_b->getLastPosition(); rb = rb_b->getRadius();
+        //current sphere position
+        vec3 a = rb_a->getPosition();
+        vec3 b = rb_b->getPosition();
+        //previous frame sphere position
+        vec3 oa = rb_a->getLastPosition();
+        vec3 ob = rb_b->getLastPosition();
+        //radius
+        float ra = rb_a->getRadius();
+        float rb = rb_b->getRadius();
 
         //intersection plane normal pointing A
-        vec3 na = glm::normalize(a-b);
-        //intersection plane normal pointing B
-        vec3 nb = -na;
+        vec3 na = glm::normalize( a - b );
+        //compute intesection point
+        vec3 q = b + na * rb;
+
+        //adjust -- A B's center position respect to q
+        vec3 a1 = q + glm::normalize( a - q ) * ra;
+        vec3 b1 = q + glm::normalize( b - q ) * rb; 
+
+        //velocity pre collision (relative to dt)
+        vec3 va = a - oa;
+        vec3 vb = b - ob;
+        //normal vector between two spheres
+        vec3 n = glm::normalize(a1 - b1);
+        //relative velocity
+        vec3 vr = va - vb;
+        //normal velocity
+        vec3 vn = glm::dot(vr, n)*n;
+        //velocity post collision EQUAL MASS
+        vec3 va1 = va - vn;
+        vec3 vb1 = vb + vn;
+
+        vec3 a2, oa2; //sphere A new position (current and old) post collision
+        vec3 b2, ob2; //sphere B new position (current and old) post collision
+        foo(a, a1, oa, glm::normalize(va1), a2, oa2);
+        foo(b, b1, ob, glm::normalize(vb1), b2, ob2);
+
+        resp.push_back(new Response(
+            Response::genId(rb_b->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
+            &rb_b->getParticles()->at(0),
+            b2,
+            ob2
+        ));
+
+        resp.push_back(new Response(
+            Response::genId(rb_a->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
+            &rb_a->getParticles()->at(0),
+            a2,
+            oa2
+        ));
+
+        
+
+
+
+
+        /* /////// NEW ALGORITHM
+        vec3 a1, b1;    // position post collision           //out
+        vec3 oa, ob;    // last step position pre collision  //constant
+        vec3 oa1, ob1;  //last step position post collision  //out
+        vec3 va, vb;    // velocity of A B (relative to dt)
+        vec3 va1, vb1;  // velocity of A B (relative to dt) post collision
+        float ra, rb;   // radius of A and B                 //constant
+        //calculate pre collision vel
+        va = a - oa;
+        vb = b - ob;
+
+        //calculate post collision vel
+        va1 = a + na;
+        vb1 = b + nb;
+        */
+         
+        /*/////// OLD PROCEDURE
 
         //intesection point
         vec3 q = b + na * rb;
 
-        //1) adjust A B's center position respect to q
+        //adjust -- A B's center position respect to q
         a1 = q + glm::normalize( a - q ) * ra;
         b1 = q + glm::normalize( b - q ) * rb; 
-
-        //adjust last step A B's center position respect to after collision A B's center position
+        //adjust -- last step A B's center position respect to post collision A B's center position
         oa1 = oa + ( a1 - a );
-        ob1 = ob + ( b1 - b );
-
-        float oad = glm::length(oa1 - a1); // distance between the two position
-        float obd = glm::length(ob1 - b1); // distance between the two position
-
-        //calculate after collision A B's center position
-        a1 = 2.0f * glm::dot( na, q - a1 ) * na + ( q - a1 );
-        b1 = 2.0f * glm::dot( nb, q - b1 ) * nb + ( q - b1 );
-
-        //adjust after collision last step A B's center position respect to after collision A B's center position
-        oa1 = a1 + glm::normalize( q - a1 )*oad;
-        ob1 = b1 + glm::normalize( q - b1 )*obd;
+        ob1 = ob + ( b1 - b ); 
+    
+        //adjust -- velocity pre collision (relative to dt)
+        va = a1 - oa1;
+        vb = b1 - ob1;
+        //normal vector between two spheres
+        vec3 n = glm::normalize(a1 - b1);
+        //relative velocity
+        vec3 vr = va - vb;
+        //normal velocity
+        vec3 vn = glm::dot(vr, n)*n;
+        //velocity post collision EQUAL MASS
+        va1 = va - vn;
+        vb1 = vb + vn;
 
         resp.push_back(new Response(
             Response::genId(rb_b->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
@@ -204,6 +281,15 @@ class Collision
             a1,
             oa1
         ));
+
+        */
+        
+        
+        
+        //only for debug -- freeze state post collision
+        //rb_b->getParticles()->at(0).stop2 = true;
+        //rb_a->getParticles()->at(0).stop2 = true;
+
     }
 
     void evaluate()
@@ -246,3 +332,5 @@ class Collision
             return m_id;
     }
 }; 
+
+

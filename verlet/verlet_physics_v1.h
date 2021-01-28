@@ -68,10 +68,16 @@ public:
     {      
         for(int i = 0; i < this->m_rBodies.size(); i ++)
         {
+            //only for collision debug
+            if(this->m_rBodies.at(i)->getParticles()->at(0).stop2)
+            {
+                continue;
+            }
+
             this->m_rBodies.at(i)->update(dt);
 
-            if( this->m_rBodies.at(i)->getParticles()->at(0).getStop() )
-            { //only for sphere to prevent bugs
+            if( this->m_rBodies.at(i)->getParticles()->at(0).stop )
+            {   //only for sphere to prevent bugs
                 this->m_rBodies.at(i)->getParticles()->at(0).reset( this->m_rBodies.at(i)->getStartPos());
                 this->m_rBodies.at(i)->update(dt); //if its the first frame it will catch up
             }
@@ -104,6 +110,11 @@ public:
         {
             result.push_back(std::make_pair(n->m_pos, vec3(n->m_side_size/2.0f, n->m_side_size/2.0f, n->m_side_size/2.0f)));
         });
+    }
+
+    bool frameByFrame()
+    {
+        return this->m_colSolv->framebyframe;
     }
 
 };

@@ -30,6 +30,9 @@ class CollisionSolver
     bool coltores = false;
     int m_ws;
 
+    //debug
+    bool framebyframe = false;
+
 
     CollisionSolver(const float &worldSize) //world center is implicit at 0 0 0
     {
@@ -132,6 +135,7 @@ class CollisionSolver
     {
         if(!coltores) return;
         coltores = false;
+        framebyframe = true;
         for_each(resp.begin(), resp.end(),
             [&](Response* r)
             {
