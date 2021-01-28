@@ -13,7 +13,20 @@ Real-Time Graphics Programming's Project - 2019/2020
 
 typedef glm::vec3 vec3;
 
-class vParticle
+class Movable 
+{
+
+    public:
+
+    virtual ~Movable(){}
+
+    virtual void setPosition(vec3 pos, vec3 old) = 0;
+    virtual vec3 getPosition() = 0;
+    virtual vec3 getLastPosition() = 0; 
+
+};
+
+class vParticle : public Movable
 {
 public:
 protected:
@@ -104,6 +117,12 @@ public:
     void setPosition(vec3 pos)
     {
         this->m_pNow = pos;
+    }
+
+    void setPosition(vec3 pos, vec3 old)
+    {
+        this->m_pNow = pos;
+        this->m_pOld = old;
     }
 
     void reset(vec3 pos) //only for sphere to prevent bugs
