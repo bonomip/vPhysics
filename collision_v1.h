@@ -119,8 +119,9 @@ class Collision
                         resp.push_back(new Response(
                             Response::genId(rb_a->getId(),  rb_a->getParticles()->at(i).getId()),
                             &rb_a->getParticles()->at(i),
-                            q )
-                        );
+                            q,
+                            rb_a->getParticles()->at(i).getLastPosition()
+                        ));
 
                         vec3 d = q - pp;
                         float k0, k1, k2;
@@ -130,17 +131,20 @@ class Collision
                         resp.push_back(new Response(
                             Response::genId(rb_b->getId(), tris.at(j).i0),
                             &rb_b->getParticles()->at(tris.at(j).i0),
-                            rb_b->getParticles()->at(tris.at(j).i0).getPosition()+(d*k0)
+                            rb_b->getParticles()->at(tris.at(j).i0).getPosition()+(d*k0),
+                            rb_b->getParticles()->at(tris.at(j).i0).getLastPosition()
                         ));
                         resp.push_back(new Response(
                             Response::genId(rb_b->getId(), tris.at(j).i1),
                             &rb_b->getParticles()->at(tris.at(j).i1),
-                            rb_b->getParticles()->at(tris.at(j).i1).getPosition()+(d*k1)
+                            rb_b->getParticles()->at(tris.at(j).i1).getPosition()+(d*k1),
+                            rb_b->getParticles()->at(tris.at(j).i1).getLastPosition()
                         ));
                         resp.push_back(new Response(
                             Response::genId(rb_b->getId(), tris.at(j).i2),
                             &rb_b->getParticles()->at(tris.at(j).i2),
-                            rb_b->getParticles()->at(tris.at(j).i2).getPosition()+(d*k2)
+                            rb_b->getParticles()->at(tris.at(j).i2).getPosition()+(d*k2),
+                            rb_b->getParticles()->at(tris.at(j).i2).getLastPosition()
                         ));
                         break;
                     } 
@@ -151,7 +155,55 @@ class Collision
 
     void evaluate(Sphere *rb_a, Sphere * rb_b)
     {
-        
+        vec3 a, b;      //position before collision             //constant
+        vec3 a1, b1;    // position after collision
+        vec3 oa, ob;    // last step position before collision  //constant
+        vec3 oa1, ob1;  //last step position after collision
+        float ra, rb;   // radius of A and B                    //constant
+
+        a = rb_a->getPosition(); oa = rb_a->getLastPosition(); ra = rb_a->getRadius();
+        b = rb_b->getPosition(); ob = rb_b->getLastPosition(); rb = rb_b->getRadius();
+
+        //intersection plane normal pointing A
+        vec3 na = glm::normalize(a-b);
+        //intersection plane normal pointing B
+        vec3 nb = -na;
+
+        //intesection point
+        vec3 q = b + na * rb;
+
+        //1) adjust A B's center position respect to q
+        a1 = q + glm::normalize( a - q ) * ra;
+        b1 = q + glm::normalize( b - q ) * rb; 
+
+        //adjust last step A B's center position respect to after collision A B's center position
+        oa1 = oa + ( a1 - a );
+        ob1 = ob + ( b1 - b );
+
+        float oad = glm::length(oa1 - a1); // distance between the two position
+        float obd = glm::length(ob1 - b1); // distance between the two position
+
+        //calculate after collision A B's center position
+        a1 = 2.0f * glm::dot( na, q - a1 ) * na + ( q - a1 );
+        b1 = 2.0f * glm::dot( nb, q - b1 ) * nb + ( q - b1 );
+
+        //adjust after collision last step A B's center position respect to after collision A B's center position
+        oa1 = a1 + glm::normalize( q - a1 )*oad;
+        ob1 = b1 + glm::normalize( q - b1 )*obd;
+
+        resp.push_back(new Response(
+            Response::genId(rb_b->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
+            &rb_b->getParticles()->at(0),
+            b1,
+            ob1
+        ));
+
+        resp.push_back(new Response(
+            Response::genId(rb_a->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
+            &rb_a->getParticles()->at(0),
+            a1,
+            oa1
+        ));
     }
 
     void evaluate()

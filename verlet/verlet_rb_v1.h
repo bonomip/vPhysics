@@ -417,10 +417,14 @@ class vRigidBody : public OItem
             return distance < s.r*s.r;
         }
 
-        //todo
         static bool collide(sphere s, sphere t, vec3 intersection)
         {
-            return false;
+            //distance between two sphere's center not squared
+            float d =   (s.pos.x - t.pos.x)*(s.pos.x - t.pos.x) +
+                        (s.pos.y - t.pos.y)*(s.pos.y - t.pos.y) +
+                        (s.pos.z - t.pos.z)*(s.pos.z - t.pos.z); 
+            float r = s.r + t.r; //sum of the radius
+            return d < r*r;
         }
     };
 
