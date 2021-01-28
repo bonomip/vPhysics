@@ -52,8 +52,6 @@ public:
     
     //used by sphere to handle wirde behaviour at initialization
     bool stop = false;
-    //used by collision response to debug
-    bool stop2 = false;
 
     //only for sphere to prevent bugs
     void reset(vec3 pos) 
