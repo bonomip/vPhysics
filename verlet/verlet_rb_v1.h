@@ -682,6 +682,11 @@ class Sphere : public vRigidBody
         return m_particles.at(0).getRadius();
     }
 
+    float getMass()
+    {
+        return m_particles.at(0).getMass();
+    }
+
     sphere getSphere()
     {
         return sphere::create(this->getPosition(), this->getRadius());
