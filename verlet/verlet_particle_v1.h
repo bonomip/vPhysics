@@ -88,7 +88,7 @@ public:
 
     void update(float dt)
     {
-        vec3 new_acc = this->m_gravity ? this->apply_gravity()+this->m_forces / this->m_mass : this->m_forces / this->m_mass;
+        vec3 new_acc = this->m_gravity ? (this->apply_gravity()+this->m_forces / this->m_mass) : (this->m_forces / this->m_mass);
         float dump = 1.0f-m_drag*dt;
         vec3 new_pos = (1.0f+dump)*m_pNow - (dump)*m_pOld + new_acc * dt*dt;
 
@@ -170,12 +170,11 @@ class SphereParticle : public vParticle
         this->m_radius = radius;
         this->m_bounciness = bounciness;
         this->m_gravity = gravity;
-        //this->m_pOld = vec3(m_pOld.x+0.15f, m_pOld.y+0.15f, m_pOld.z);
     }
 
     void update(float dt)
     {
-        vec3 new_acc = this->m_gravity ? this->apply_gravity()+this->m_forces / this->m_mass : this->m_forces / this->m_mass;
+        vec3 new_acc = this->m_gravity ? (this->apply_gravity()+this->m_forces / this->m_mass) : (this->m_forces / this->m_mass);
         float dump = 1.0f-this->m_drag*dt;
         vec3 new_pos = (1.0f+dump)*this->m_pNow - (dump)*this->m_pOld + new_acc * dt*dt;
 
