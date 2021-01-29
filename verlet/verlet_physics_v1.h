@@ -41,14 +41,16 @@ public:
         if(COLLISION_SOLVER) m_colSolv = new CollisionSolver(worldSize);
     }
 
-    void addBox(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
+    vRigidBody* addBox(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
         m_rBodies.push_back(new Box(this->m_countRb++, pos, color, rot, scale, mass, drag, useGravity, isKinematic, this->m_worldSize));
+        return m_rBodies.back();
     }
 
-    void addSphere(vec3 pos, GLfloat* color, vec3 rot, const float &radius, float mass, float drag, float bounciness, bool useGravity, bool isKinematic)
+    vRigidBody* addSphere(vec3 pos, GLfloat* color, vec3 rot, const float &radius, float mass, float drag, float bounciness, bool useGravity, bool isKinematic)
     {
        m_rBodies.push_back(new Sphere(this->m_countRb++, pos, color, rot, radius, mass, drag, bounciness, useGravity, isKinematic, this->m_worldSize));
+       return m_rBodies.back();
     }
 
     void cleanWorld()

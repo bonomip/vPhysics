@@ -21,7 +21,8 @@ class Movable
     virtual ~Movable(){}
     virtual void setPosition(vec3 pos, vec3 old) = 0;
     virtual vec3 getPosition() = 0;
-    virtual vec3 getLastPosition() = 0; 
+    virtual vec3 getLastPosition() = 0;
+    virtual void applyForce(vec3 f) = 0; 
 };
 
 class vParticle : public Movable
@@ -44,6 +45,8 @@ protected:
     float m_radius;
     float m_bounciness;
 
+    bool m_gravity;
+
 public:
     int m_rbid, m_id; //rigidbody id, particle id 
 
@@ -63,7 +66,7 @@ public:
    
     ////////////////////
 
-    vParticle(int rb_id,int id,vec3 pos,float mass,float drag, float worldSize)
+    vParticle(int rb_id,int id,vec3 pos,float mass,float drag, float worldSize, bool gravity = true)
     {
         this->m_pNow = pos;
         this->m_pOld = pos;
@@ -75,6 +78,7 @@ public:
         this->m_id = id;
 
         this->m_worldSize = worldSize;
+        this->m_gravity = gravity;
     }
 
     int getId()
@@ -84,7 +88,7 @@ public:
 
     void update(float dt)
     {
-        vec3 new_acc = apply_gravity()+m_forces / m_mass;
+        vec3 new_acc = this->m_gravity ? this->apply_gravity()+this->m_forces / this->m_mass : this->m_forces / this->m_mass;
         float dump = 1.0f-m_drag*dt;
         vec3 new_pos = (1.0f+dump)*m_pNow - (dump)*m_pOld + new_acc * dt*dt;
 
@@ -102,6 +106,11 @@ public:
         m_pNow = new_pos;
         m_dt = dt;
         m_forces = vec3(0.0f,0.0f,0.0f);
+    }
+
+    void applyForce(vec3 f)
+    {
+        this->m_forces = f;
     }
 
     vec3 getPosition()
@@ -155,17 +164,18 @@ protected:
 class SphereParticle : public vParticle 
 {
     public:
-    SphereParticle(int rb_id,int id,vec3 pos,float radius,float mass,float drag,float bounciness,float worldSize) :
+    SphereParticle(int rb_id,int id,vec3 pos,float radius,float mass,float drag,float bounciness,float worldSize, bool gravity = true) :
     vParticle(rb_id, id, pos, mass, drag, worldSize)
     {
         this->m_radius = radius;
         this->m_bounciness = bounciness;
+        this->m_gravity = gravity;
         //this->m_pOld = vec3(m_pOld.x+0.15f, m_pOld.y+0.15f, m_pOld.z);
     }
 
     void update(float dt)
     {
-        vec3 new_acc = this->apply_gravity()+this->m_forces / this->m_mass;
+        vec3 new_acc = this->m_gravity ? this->apply_gravity()+this->m_forces / this->m_mass : this->m_forces / this->m_mass;
         float dump = 1.0f-this->m_drag*dt;
         vec3 new_pos = (1.0f+dump)*this->m_pNow - (dump)*this->m_pOld + new_acc * dt*dt;
 

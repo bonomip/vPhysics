@@ -185,6 +185,7 @@ class Collision
         vec3 na = glm::normalize( a - b );
         //compute intesection point
         vec3 q = b + na * rb;
+    
 
         //adjust -- A B's center position respect to q
         vec3 a1 = q + glm::normalize( a - q ) * ra;
@@ -202,6 +203,16 @@ class Collision
         //velocity post collision EQUAL MASS
         vec3 va1 = va - vn;
         vec3 vb1 = vb + vn;
+
+        std::cout << "A: " << rb_a->getId();
+        std::cout << " - B: " << rb_b->getId() << std::endl;
+        std::cout << "A velocity: "  << glm::to_string(va) << std::endl;
+        std::cout << "B velocity: "  << glm::to_string(vb) << std::endl;
+        std::cout << "relative velocity: "  << glm::to_string(vr) << std::endl;
+        std::cout << "normal vector: "  << glm::to_string(n) << std::endl;
+        std::cout << "normal velocity: "  << glm::to_string(vn) << std::endl;
+        std::cout << "A velocity post collision: " << glm::to_string(va1) << std::endl;
+        std::cout << "B velocity post collision: " << glm::to_string(vb1) << std::endl;
 
         vec3 a2, oa2; //sphere A new position (current and old) post collision
         vec3 b2, ob2; //sphere B new position (current and old) post collision

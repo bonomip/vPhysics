@@ -436,7 +436,6 @@ class vRigidBody : public OItem
 
     int m_id;
     int m_kind;
-    bool m_useGravity;
     bool m_isKinematic;
 
     vec3 m_start_pos;
@@ -451,10 +450,9 @@ public:
     
     vRigidBody& operator=(const vRigidBody& copy) = delete;
 
-    vRigidBody(const int id,const int kind, GLfloat* color, const vec3 scale, const bool useGravity,const bool isKinematic)
+    vRigidBody(const int id,const int kind, GLfloat* color, const vec3 scale, const bool isKinematic)
     {
         this->m_scale = scale;
-        this->m_useGravity = useGravity;
         this->m_isKinematic = isKinematic;
         this->m_kind = kind;
         this->m_id = id;
@@ -475,6 +473,12 @@ public:
         
         for(int i = 0; i < 2; i++) for_each(this->m_connections.begin(), this->m_connections.end(), [&](vConnection &c) { c.enforceConstraint(); } );
     }      
+
+    void applyForce(vec3 f)
+    {
+        if(this->m_kind == 0) for_each(this->m_particles.begin(), this->m_particles.end(), [&](vParticle &p) { p.applyForce(f); } );
+        if(this->m_kind == 1) static_cast<SphereParticle&>(this->m_particles.at(0)).applyForce(f);
+    }
 
     bool isBox(){ return this->m_kind == 0; }     // 0 for boxes
 
@@ -527,7 +531,7 @@ class Box : public vRigidBody
 {
     public:
     Box(int id, vec3 pos, GLfloat* color, vec3 e_rot, vec3 scale, float mass,float drag, bool useGravity,bool isKinematic, float worldSize)
-    : vRigidBody(id, 0, color, scale, useGravity, isKinematic)
+    : vRigidBody(id, 0, color, scale, isKinematic)
     {
         vector<vec3> obj_pos;
 
@@ -543,7 +547,7 @@ class Box : public vRigidBody
         glm::mat4 rot = glm::eulerAngleYXZ(e_rot.y, e_rot.x, e_rot.z);
         for(int i = 0; i < 8; i++){
             glm::vec4 p = glm::vec4(obj_pos[i], 1) * rot;
-            this->m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize));
+            this->m_particles.push_back(vParticle(id, i, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), mass, drag, worldSize, useGravity));
         }
 
         for(int i = 0; i < this->m_particles.size()-1; i ++)
@@ -643,7 +647,7 @@ class Sphere : public vRigidBody
 {
     public:
     Sphere(const int id, const vec3 pos, GLfloat* color, const vec3 e_rot, const float radius,const float mass,const float drag, const float bounciness, const bool useGravity,const bool isKinematic, const float &worldSize)
-    : vRigidBody(id, 1, color, vec3(radius, radius, radius), useGravity, isKinematic)
+    : vRigidBody(id, 1, color, vec3(radius, radius, radius), isKinematic)
     {
         this->m_start_pos = pos;
         this->m_start_rot = e_rot;
@@ -652,7 +656,7 @@ class Sphere : public vRigidBody
 
         glm::vec4 p = glm::vec4(vec3(.0f,.0f,.0f), 1) * rot; //sphere is made up by 1 patricles in its center
 
-        m_particles.push_back(SphereParticle(id, 0, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), radius, mass, drag, bounciness, worldSize));
+        m_particles.push_back(SphereParticle(id, 0, vec3(pos.x+p.x, pos.y+p.y, pos.z+p.z), radius, mass, drag, bounciness, worldSize, useGravity));
     }
 
     ~Sphere()
