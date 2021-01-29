@@ -34,6 +34,19 @@ CollisionSolver * m_colSolv;
 public:
     vPhysics(){}
 
+    struct spherePrefab
+    {
+        vec3 pos = vec3(.0f,.0f,.0f);
+        vec3 rot = vec3(.0f,.0f,.0f); 
+        GLfloat* color;
+        float radius = .5f; 
+        float mass = .5f;
+        float drag = .5f;
+        float bounciness = .5f;
+        bool gravity = true;
+        bool kinematic = false;
+    };
+
     void setWorld(const float &worldSize) 
     {
         m_worldSize = worldSize; //world center is implicit at 0 0 0
@@ -51,6 +64,11 @@ public:
     {
        m_rBodies.push_back(new Sphere(this->m_countRb++, pos, color, rot, radius, mass, drag, bounciness, useGravity, isKinematic, this->m_worldSize));
        return m_rBodies.back();
+    }
+
+    vRigidBody* addSphere(spherePrefab s)
+    {
+        return this->addSphere(s.pos, s.color, s.rot, s.radius, s.mass, s.drag, s.bounciness, s.gravity, s.kinematic);
     }
 
     void cleanWorld()
