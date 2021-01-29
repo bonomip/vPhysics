@@ -78,21 +78,7 @@ class Collision
         }
     };
 
-    // a = current sphere position, a1 = adjusted sphere position, vel = velocity
-    // &out_a = calculated current sphere position
-    // &out_o = calculated previous frame sphere position
-    static void foo(vec3 a, vec3 a1, vec3 vel, vec3 &out_a, vec3& out_o)
-    {
-        //adjust factor
-        float s = glm::length(a-a1);
 
-        std::cout << s << std::endl;
-        std::cout << glm::to_string( a1 + glm::normalize(vel) * s) << std::endl;
-        //velocity magnitude -> equal mass 
-
-        out_a = s == 0 ? a1 : a1 + glm::normalize(vel) * s;
-        out_o = out_a - vel;
-    }
 
     void evaluate(Box * rb_a, Box * rb_b)
         {
@@ -169,6 +155,55 @@ class Collision
         }
     }
 
+
+    //this method will calculate the new state of patricle A after hitting a rigidbody B
+    // out_pos = A post collision position
+    // out_last_pos = A post collision last frame position
+    // pos = A pre collision position
+    // last_pos = A pre collision last frame position
+    // mass_a = mass of patricle A
+    // vel_b = velocity of rigidbody B
+    // mass_b = mass of rigidbody B
+    // intersection = intersection point
+    // normal = intersection plane normal pointing A
+    // [optional] radius_a = radius of patricle A
+    static void reflectpatricle(vec3 &out_pos, vec3 &out_last_pos, vec3 pos, vec3 last_pos, float mass_a, vec3 vel_b, float mass_b, vec3 intersection, vec3 normal, float radius_a = 0.0f )
+    {
+        //adjust patricle position respect to intersection point and its radius (if present)
+        vec3 pos1 = intersection + glm::normalize(pos - intersection) * radius_a;
+        //compute velocity pre collision
+        vec3 vel_a = pos - last_pos;
+        //compute the normal velocity using relative velocity (vel_a - vel_b)
+        vec3 vel_norm = glm::dot( vel_a - vel_b, normal ) * normal;
+        //compute velocity post collision respect to mass
+        vec3 vel_a1 = vel_a - ( 2.0f * mass_b / ( mass_a + mass_b ) ) * vel_norm;
+        //compute the adjust factor
+        float s = glm::length(pos-pos1);
+
+        //compute the new state of the patricle -> current position + old position
+        out_pos = s == 0 ? pos1 : pos1 + glm::normalize(vel_a1) * s;
+        out_last_pos = out_pos - vel_a1;
+    }
+
+    /*
+    
+    OLD EVALUATE METHOD A LITTE BIT MORE PRECISE DUE TO THE COLLISION NORMAL CALCULATED AFTER ADJUSTED THE CENTER OF THE PATRICLE IN A VALID POSITION
+    BOTH METHOD ARE IMPRECISE THOUGH.
+
+    THE BEST WAY TO DO THIS IS EXPLAINED ABOVE AT (1)
+
+    // a = current sphere position, a1 = adjusted sphere position, vel = velocity
+    // &out_a = calculated current sphere position
+    // &out_o = calculated previous frame sphere position
+    static void foo(vec3 a, vec3 a1, vec3 vel, vec3 &out_a, vec3& out_o)
+    {
+        //adjust factor
+        float s = glm::length(a-a1);
+
+        out_a = s == 0 ? a1 : a1 + glm::normalize(vel) * s;
+        out_o = out_a - vel;
+    }
+
     void evaluate(Sphere *rb_a, Sphere * rb_b)
     {
         //current sphere position
@@ -186,35 +221,36 @@ class Collision
         //compute intesection point
         vec3 q = b + na * rb;
     
-
         //adjust -- A B's center position respect to q
+        // 1 ---------------------------------------------------- SOLVE THIS BUG !!!!!
+        //the most correct way to do this is
+        //solving this system:
+        //  
+        //  vb, va = velocity es: ( a.position() - a.lastPosition() )
+        //  
+        //  { || b' - a' || = a.radius + b.radius
+        //  { b' = b.lastPosition() + ß(b.position() - b.lastPosition() )
+        //  { a' = a.lastPosition() + ß(b.position() - b.lastPosition() )
+        //
         vec3 a1 = q + glm::normalize( a - q ) * ra;
-        vec3 b1 = q + glm::normalize( b - q ) * rb; 
+        vec3 b1 = q + glm::normalize( b - q ) * rb;
 
         //velocity pre collision (relative to dt)
         vec3 va = a - oa;
         vec3 vb = b - ob;
         //normal vector between two spheres
         vec3 n = glm::normalize(a1 - b1);
-        //relative velocity
-        vec3 vr = va - vb;
+        //relative velocity -> va - vb
         //normal velocity
-        vec3 vn = glm::dot(vr, n)*n;
-        //velocity post collision EQUAL MASS
-        vec3 va1 = va - vn;
-        vec3 vb1 = vb + vn;
+        vec3 vn = glm::dot(va - vb, n)*n;
+        
+        //velocity post collision
+        float ma = rb_a->getMass();
+        float mb = rb_b->getMass();
 
-        std::cout << "A: " << rb_a->getId();
-        std::cout << " - B: " << rb_b->getId() << std::endl;
-        std::cout << "A velocity: "  << glm::to_string(va) << std::endl;
-        std::cout << "B velocity: "  << glm::to_string(vb) << std::endl;
-         std::cout << "A velocity post collision: " << glm::to_string(va1) << std::endl;
-        std::cout << "B velocity post collision: " << glm::to_string(vb1) << std::endl;
-        std::cout << "relative velocity: "  << glm::to_string(vr) << std::endl;
-        std::cout << "normal vector: "  << glm::to_string(n) << std::endl;
-        std::cout << "normal velocity: "  << glm::to_string(vn) << std::endl;
+        vec3 va1 = va - ( 2.0f * mb / ( ma + mb ) ) * vn;
+        vec3 vb1 = vb + ( 2.0f * ma / ( ma + mb ) ) * vn;
        
-
         vec3 a2, oa2; //sphere A new position (current and old) post collision
         vec3 b2, ob2; //sphere B new position (current and old) post collision
 
@@ -233,6 +269,70 @@ class Collision
             &rb_a->getParticles()->at(0),
             a2,
             oa2
+        ));
+    } */
+
+    void evaluate(Sphere *rb_a, Sphere * rb_b)
+    {
+        vec3 b_pos, a_pos, b_last, a_last;
+        float b_radius, a_radius, a_mass, b_mass;
+
+        a_pos = rb_a->getPosition();
+        a_last = rb_a->getLastPosition();
+        a_radius = rb_a->getRadius();
+        a_mass = rb_a->getMass();
+
+        b_pos = rb_b->getPosition();
+        b_last = rb_b->getLastPosition();
+        b_radius = rb_b->getRadius();
+        b_mass = rb_b->getMass();
+        
+
+        //compute normals & intesection point
+        vec3 a_normal = glm::normalize( a_pos - b_pos );
+        vec3 b_normal = glm::normalize( b_pos - a_pos );
+        vec3 intersection = b_pos + a_normal * b_radius;
+
+
+        //the following method will put the result in these variables
+        vec3 a, oa, b, ob;
+
+        reflectpatricle(a, 
+                        oa,
+                        a_pos,
+                        a_last,
+                        a_mass,
+                        b_pos - b_last,
+                        b_mass,
+                        intersection,
+                        a_normal,
+                        a_radius
+                        );
+
+        reflectpatricle(b, 
+                    ob,
+                    b_pos,
+                    b_last,
+                    b_mass,
+                    a_pos - a_last,
+                    a_mass,
+                    intersection,
+                    b_normal,
+                    b_radius
+                    );
+
+        resp.push_back(new Response(
+            Response::genId(rb_b->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
+            &rb_b->getParticles()->at(0),
+            b,
+            ob
+        ));
+
+        resp.push_back(new Response(
+            Response::genId(rb_a->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
+            &rb_a->getParticles()->at(0),
+            a,
+            oa
         ));
     }
 
