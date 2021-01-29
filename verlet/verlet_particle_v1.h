@@ -179,6 +179,10 @@ class SphereParticle : public vParticle
         float dump = 1.0f-this->m_drag*dt;
         vec3 new_pos = (1.0f+dump)*this->m_pNow - (dump)*this->m_pOld + new_acc * dt*dt;
 
+        //thers a bug where bounciness > 0
+        //the procedure doesen't take into cosideration if the patricle is colliding
+        // with the bound also the previus step
+        //this cause a force in the opposide direction 
         enforceWorldConstraint(&new_pos);
         
         this->m_pOld = this->m_pNow;
@@ -237,7 +241,6 @@ class SphereParticle : public vParticle
         {
             if( -s > q ) // first case -> point outside bound
             {
-                std::cout << "verlet patricle enforce neg -> not tested rb_id:" << this->m_rbid << std::endl;
                 s = s + 2.0f*(s+q); // reflect new position respect q
                 p = p + 2.0f*(p+q); // reflect old position respect q
 

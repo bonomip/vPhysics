@@ -78,20 +78,20 @@ class Collision
         }
     };
 
-    // a = current sphere position, a1 = adjusted sphere position, o = previous frame sphere position, nvel = velocity normalized
+    // a = current sphere position, a1 = adjusted sphere position, vel = velocity
     // &out_a = calculated current sphere position
     // &out_o = calculated previous frame sphere position
-    static void foo(vec3 a, vec3 a1, vec3 o, vec3 nvel, vec3 &out_a, vec3& out_o)
+    static void foo(vec3 a, vec3 a1, vec3 vel, vec3 &out_a, vec3& out_o)
     {
         //adjust factor
         float s = glm::length(a-a1);
+
+        std::cout << s << std::endl;
+        std::cout << glm::to_string( a1 + glm::normalize(vel) * s) << std::endl;
         //velocity magnitude -> equal mass 
-        float d = glm::length(o-a);
 
-        //vec3 o1 = a + ( o - a ); usless due to the result
-
-        out_a = a1 + nvel * s;
-        out_o = out_a - nvel * d;
+        out_a = s == 0 ? a1 : a1 + glm::normalize(vel) * s;
+        out_o = out_a - vel;
     }
 
     void evaluate(Box * rb_a, Box * rb_b)
@@ -208,16 +208,18 @@ class Collision
         std::cout << " - B: " << rb_b->getId() << std::endl;
         std::cout << "A velocity: "  << glm::to_string(va) << std::endl;
         std::cout << "B velocity: "  << glm::to_string(vb) << std::endl;
+         std::cout << "A velocity post collision: " << glm::to_string(va1) << std::endl;
+        std::cout << "B velocity post collision: " << glm::to_string(vb1) << std::endl;
         std::cout << "relative velocity: "  << glm::to_string(vr) << std::endl;
         std::cout << "normal vector: "  << glm::to_string(n) << std::endl;
         std::cout << "normal velocity: "  << glm::to_string(vn) << std::endl;
-        std::cout << "A velocity post collision: " << glm::to_string(va1) << std::endl;
-        std::cout << "B velocity post collision: " << glm::to_string(vb1) << std::endl;
+       
 
         vec3 a2, oa2; //sphere A new position (current and old) post collision
         vec3 b2, ob2; //sphere B new position (current and old) post collision
-        foo(a, a1, oa, glm::normalize(va1), a2, oa2);
-        foo(b, b1, ob, glm::normalize(vb1), b2, ob2);
+
+        foo(a, a1, va1, a2, oa2);
+        foo(b, b1, vb1, b2, ob2);
 
         resp.push_back(new Response(
             Response::genId(rb_b->getId(), 0 ), //in sphere there is only one patricle, thus id is always 0
