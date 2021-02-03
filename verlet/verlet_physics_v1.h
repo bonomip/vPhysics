@@ -17,9 +17,6 @@ using namespace std;
 //for_each loop
 #include<algorithm>
 
-//OpenGL extension
-#include <glad/glad.h>
-
 class vPhysics
 {
 
@@ -47,6 +44,18 @@ public:
         bool kinematic = false;
     };
 
+    struct boxPrefab
+    {
+        vec3 pos = vec3(.0f,.0f,.0f);
+        GLfloat* color;
+        vec3 rot = vec3(.0f,.0f,.0f); 
+        vec3 scale = vec3(.2f, .4f, .2f); 
+        float mass = .5f;
+        float drag = .5f;
+        bool gravity = true;
+        bool kinematic = false;
+    };
+
     void setWorld(const float &worldSize) 
     {
         m_worldSize = worldSize; //world center is implicit at 0 0 0
@@ -58,6 +67,11 @@ public:
     {
         m_rBodies.push_back(new Box(this->m_countRb++, pos, color, rot, scale, mass, drag, useGravity, isKinematic, this->m_worldSize));
         return m_rBodies.back();
+    }
+
+    vRigidBody* addBox(boxPrefab b)
+    {
+        return this->addBox(b.pos, b.color, b.rot, b.scale, b.mass, b.drag, b.gravity, b.kinematic);
     }
 
     vRigidBody* addSphere(vec3 pos, GLfloat* color, vec3 rot, const float &radius, float mass, float drag, float bounciness, bool useGravity, bool isKinematic)
@@ -95,17 +109,15 @@ public:
                 this->m_rBodies.at(i)->getParticles()->at(0).reset( this->m_rBodies.at(i)->getStartPos());
                 this->m_rBodies.at(i)->update(dt); //if its the first frame it will catch up
             }
+
+            this->m_rBodies.at(i)->updateConstraint();
         }
 
         if(COLLISION_SOLVER)
         {
             m_colSolv->setBodies(&m_rBodies);
             m_colSolv->update();
-        }
 
-        for(int i = 0; i < this->m_rBodies.size(); i ++)
-        {
-            this->m_rBodies.at(i)->updateConstraint();
         }
     }
 

@@ -499,6 +499,11 @@ public:
         return this->m_start_pos;
     }
 
+    vec3 getVelocity()
+    {
+        return this->getPosition()-this->getLastPosition();
+    }
+
     virtual vec3 getPosition() = 0;
     
     virtual vec3 getLastPosition() = 0;
@@ -622,6 +627,11 @@ class Box : public vRigidBody
         result[3] = glm::vec4(0, 0, 0, 1);
 
         return result;
+    }
+
+    float getMass()
+    {
+        return this->m_particles.at(0).getMass() * 8;
     }
 
     bool isMember(vec3 node_pos, float node_side_size)
