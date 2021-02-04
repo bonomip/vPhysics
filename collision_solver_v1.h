@@ -91,8 +91,6 @@ class CollisionSolver
                         {
                             coltores = true;
                             vector<int> df = Collision::genId(pt_a->getId(), pt_b->getId());
-                            //std::cout << "COLLISION SOLVER - UPDATE -> collision id " << df.at(0) << "." << df.at(1);
-                            //std::cout << " in leaf number " << i << std::endl;
                             addCollision(new Collision(pt_a, pt_b, intersection));
                         }
                 }

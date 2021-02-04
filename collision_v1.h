@@ -61,11 +61,11 @@ class Collision
             return r;
         }
 
-        void static baricentricDistribution(triangleResp trsp, float &u, float &v, float &w)
+        void static baricentricDistribution(vec3 t0, vec3 t1, vec3 t2, vec3 intersection, float &u, float &v, float &w)
         { //homogeneous
-            vec3 v0 = trsp.tri.v1 - trsp.tri.v0;
-            vec3 v1 = trsp.tri.v2 - trsp.tri.v0;
-            vec3 v2 = trsp.intersection - trsp.tri.v0;
+            vec3 v0 = t1 - t0;
+            vec3 v1 = t2 - t0;
+            vec3 v2 = intersection - t0;
             float d00 = dot(v0, v0);
             float d01 = dot(v0, v1);
             float d11 = dot(v1, v1);
@@ -78,11 +78,11 @@ class Collision
         }
     };
 
-
-
     void evaluate(Box * rb_a, Box * rb_b)
         {
-            vec3 pp; //patricle position
+            vec3 p_pos; //patricle pre collision position
+            vec3 po_pos; //patricle pre collision laste frame position
+            
             float px, py, pz;
             vector<vRigidBody::triangle> tris;
             vRigidBody::box b = rb_b->getBox();
@@ -90,9 +90,10 @@ class Collision
         
         for(int i = 0; i < rb_a->getParticles()->size(); i++)
         { //for each particles of A
-            pp = rb_a->getParticles()->at(i).getPosition();
+            p_pos = rb_a->getParticles()->at(i).getPosition();
+            po_pos = rb_a->getParticles()->at(i).getLastPosition();
 
-            vec3 v = pp-b.position;
+            vec3 v = p_pos-b.position;
 
             px = std::abs(glm::dot(v, b.x));
             py = std::abs(glm::dot(v, b.y));
@@ -100,54 +101,46 @@ class Collision
             
             if(px <= b.w && py <= b.h && pz <= b.d) //the i-th patricle of A is inside B
             {   
-                //std::cout << "\t\tCOLLISION - halfEval -> collision id " <<  m_id.at(0) << "." << m_id.at(1) << " patricle " << rb_a->getParticles()->at(i).m_id << " of rb_a " << rb_a->getParticles()->at(i).m_rbid;
-                //std::cout << " is inside rb_a " << b_id << std::endl;
+                vec3 a_out, ao_out;
+                vec3 particle_vel = rb_a->getParticles()->at(i).getPosition() - rb_a->getParticles()->at(i).getLastPosition();
+
                 for(int j = 0; j < tris.size(); j++) //for each triangle
                 {
-                    vec3 q;
-                    vec3 rayDir = normalize(pp-rb_a->getParticles()->at(i).getLastPosition()); //patricle position - patricle last position
-                    vec3 origin = rb_a->getParticles()->at(i).getLastPosition()+(rayDir*(-2.0f)); //the origin is put far away from the collision point
+                    vec3 intersection;
+                    vec3 rayDir = normalize(p_pos-po_pos); //patricle position - patricle last position
+                    vec3 origin = po_pos+(rayDir*(-2.0f)); //the origin is put far away from the collision point
 
-                    if(vRigidBody::triangle::rejectTri(rayDir, tris.at(j))){
-                        //std::cout << "\tCOLLISION_RESPONSE - halfEval -> rejected triangle" << std::endl;
-                        continue;
-                    }
+                    if(vRigidBody::triangle::rejectTri(rayDir, tris.at(j))) continue;
 
-                    if(vRigidBody::triangle::rayIntersect(origin, rayDir, tris.at(j), q))
+                    if(vRigidBody::triangle::rayIntersect(origin, rayDir, tris.at(j), intersection))
                     {
-                        //std::cout << "\tCOLLISION - halfEval -> found collision points" << std::endl;
-                
-                        //responses created by the collision are put in vector "resp"
+                        //this method dosen't fit
+                        //it dosen't take into consideration angular velocity 
+
+                        reflectpatricle( a_out, ao_out, p_pos, rb_a->getParticles()->at(i).getLastPosition(),
+                                rb_a->getMass(), rb_b->getVelocity(), rb_b->getMass(),
+                                intersection, vRigidBody::triangle::getNormal(tris.at(j))
+                        );
+                            
                         resp.push_back(new Response(
                             Response::genId(rb_a->getId(),  rb_a->getParticles()->at(i).getId()),
                             &rb_a->getParticles()->at(i),
-                            q,
-                            rb_a->getParticles()->at(i).getLastPosition()
-                        ));
+                            a_out,
+                            ao_out
+                            )
+                        );
 
-                        vec3 d = q - pp;
-                        float k0, k1, k2;
-                        triangleResp trsp = triangleResp::create(tris.at(j), d, q);
-                        triangleResp::baricentricDistribution(trsp, k0, k1, k2);
+                        vec3 p1_out, p2_out, p3_out;
+                        vec3 po1_out, po2_out, po3_out;
+                        
+                        vec3 p1_pos = rb_b->getParticles()->at(tris.at(j).i0).getPosition();
+                        vec3 p2_pos = rb_b->getParticles()->at(tris.at(j).i1).getPosition();
+                        vec3 p3_pos = rb_b->getParticles()->at(tris.at(j).i2).getPosition();
 
-                        resp.push_back(new Response(
-                            Response::genId(rb_b->getId(), tris.at(j).i0),
-                            &rb_b->getParticles()->at(tris.at(j).i0),
-                            rb_b->getParticles()->at(tris.at(j).i0).getPosition()+(d*k0),
-                            rb_b->getParticles()->at(tris.at(j).i0).getLastPosition()
-                        ));
-                        resp.push_back(new Response(
-                            Response::genId(rb_b->getId(), tris.at(j).i1),
-                            &rb_b->getParticles()->at(tris.at(j).i1),
-                            rb_b->getParticles()->at(tris.at(j).i1).getPosition()+(d*k1),
-                            rb_b->getParticles()->at(tris.at(j).i1).getLastPosition()
-                        ));
-                        resp.push_back(new Response(
-                            Response::genId(rb_b->getId(), tris.at(j).i2),
-                            &rb_b->getParticles()->at(tris.at(j).i2),
-                            rb_b->getParticles()->at(tris.at(j).i2).getPosition()+(d*k2),
-                            rb_b->getParticles()->at(tris.at(j).i2).getLastPosition()
-                        ));
+                        float b1, b2, b3;
+
+                        triangleResp::baricentricDistribution(p1_pos, p2_pos, p3_pos, intersection, b1, b2, b3);
+
                         break;
                     } 
                 }
@@ -167,7 +160,7 @@ class Collision
     // intersection = intersection point
     // normal = intersection plane normal pointing A
     // [optional] radius_a = radius of patricle A
-    static void reflectpatricle(vec3 &out_pos, vec3 &out_last_pos, vec3 pos, vec3 last_pos, float mass_a, vec3 vel_b, float mass_b, vec3 intersection, vec3 normal, float radius_a = 0.0f )
+    static void reflectpatricle(vec3 &out_pos, vec3 &out_last_pos, vec3 pos, vec3 last_pos, float mass_a, vec3 vel_b, float mass_b, vec3 intersection, vec3 normal, float radius_a = 0.0f)
     {
         //adjust patricle position respect to intersection point and its radius (if present)
         vec3 pos1 = intersection + glm::normalize(pos - intersection) * radius_a;

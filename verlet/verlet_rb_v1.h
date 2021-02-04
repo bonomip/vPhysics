@@ -407,6 +407,7 @@ class vRigidBody : public OItem
 
         static bool collideAxisAligned(sphere s, box b)
         {
+            // get box closest point to sphere center by clamping
             float x = max( b.position.x - b.w, min( s.pos.x, b.w  + b.position.x ) );
             float y = max( b.position.y - b.h, min( s.pos.y, b.h  + b.position.y ) );
             float z = max( b.position.z - b.d, min( s.pos.z, b.d  + b.position.z ) );

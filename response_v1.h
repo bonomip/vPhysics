@@ -46,10 +46,12 @@ class Response
         }
 
         //this need to be review
-        void update(Response * r)
+        void update(Response * r) //each response share the same Movable
         {
+            /*
             vec3 n = this->pos - this->mov->getPosition();
             vec3 v = r->pos - r->mov->getPosition();
             this->pos = this->mov->getPosition()+n+v;
+            */
         }
     };
