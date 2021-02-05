@@ -216,8 +216,8 @@ class SphereParticle : public vParticle
             if( s > q ) // first case -> point outside bound
             {
                 std::cout << "verlet patricle enforce pos -> not tested rb_id:" << this->m_rbid << std::endl;
-                s = s - 2.0f*(s-q); // reflect new position respect q
-                p = p - 2.0f*(p-q); // reflect old position respect q
+                s = s + 2.0f*(s-q); // reflect new position respect q
+                p = p + 2.0f*(p-q); // reflect old position respect q
                 this->stop = true;
             } else //second case -> point inside bound
             {
@@ -240,8 +240,8 @@ class SphereParticle : public vParticle
         {
             if( -s > q ) // first case -> point outside bound
             {
-                s = s + 2.0f*(s+q); // reflect new position respect q
-                p = p + 2.0f*(p+q); // reflect old position respect q
+                s = s - 2.0f*(s+q); // reflect new position respect q
+                p = p - 2.0f*(p+q); // reflect old position respect q
 
                 this->stop = true;
             } else //second case -> point inside bound //COMMON ONE

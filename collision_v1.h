@@ -102,7 +102,7 @@ class Collision
             if(px <= b.w && py <= b.h && pz <= b.d) //the i-th patricle of A is inside B
             {   
                 vec3 a_out, ao_out;
-                vec3 particle_vel = rb_a->getParticles()->at(i).getPosition() - rb_a->getParticles()->at(i).getLastPosition();
+                //vec3 particle_vel = rb_a->getParticles()->at(i).getPosition() - rb_a->getParticles()->at(i).getLastPosition();
 
                 for(int j = 0; j < tris.size(); j++) //for each triangle
                 {
@@ -130,7 +130,7 @@ class Collision
                             )
                         );
 
-                        vec3 p1_out, p2_out, p3_out;
+                        /*vec3 p1_out, p2_out, p3_out;
                         vec3 po1_out, po2_out, po3_out;
                         
                         vec3 p1_pos = rb_b->getParticles()->at(tris.at(j).i0).getPosition();
@@ -140,7 +140,7 @@ class Collision
                         float b1, b2, b3;
 
                         triangleResp::baricentricDistribution(p1_pos, p2_pos, p3_pos, intersection, b1, b2, b3);
-
+                        */
                         break;
                     } 
                 }

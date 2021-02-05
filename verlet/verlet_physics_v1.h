@@ -103,13 +103,6 @@ public:
         for(int i = 0; i < this->m_rBodies.size(); i ++)
         {
             this->m_rBodies.at(i)->update(dt);
-
-            if( this->m_rBodies.at(i)->getParticles()->at(0).stop )
-            {   //only for sphere to prevent bugs
-                this->m_rBodies.at(i)->getParticles()->at(0).reset( this->m_rBodies.at(i)->getStartPos());
-                this->m_rBodies.at(i)->update(dt); //if its the first frame it will catch up
-            }
-
             this->m_rBodies.at(i)->updateConstraint();
         }
 
