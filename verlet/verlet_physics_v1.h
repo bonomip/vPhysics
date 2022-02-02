@@ -14,16 +14,8 @@ using namespace std;
 #include <physics/verlet/verlet_rb_v1.h>
 #include <physics/collision_solver_v1.h>
 
-//vector classw
-#include <vector>
-
 //for_each loop
 #include<algorithm>
-
-//OpenGL extension
-#include <glad/glad.h>
-
-#include <physics/struct_v1.h>
 
 class vPhysics
 {
@@ -31,52 +23,95 @@ class vPhysics
 typedef glm::vec3 vec3;
 float m_worldSize;
 vector<vRigidBody*> m_rBodies;
-CollisionSolver<vRigidBody> * m_collisionDetection;
+int m_countRb;
+
+static const int COLLISION_SOLVER = 1;
+CollisionSolver * m_colSolv;
 
 public:
-    vPhysics()
+    vPhysics(){}
+
+    struct spherePrefab
     {
-    }
+        vec3 pos = vec3(.0f,.0f,.0f);
+        vec3 rot = vec3(.0f,.0f,.0f); 
+        GLfloat* color;
+        float radius = .5f; 
+        float mass = .5f;
+        float drag = .5f;
+        float bounciness = .5f;
+        bool gravity = true;
+        bool kinematic = false;
+    };
+
+    struct boxPrefab
+    {
+        vec3 pos = vec3(.0f,.0f,.0f);
+        GLfloat* color;
+        vec3 rot = vec3(.0f,.0f,.0f); 
+        vec3 scale = vec3(.2f, .4f, .2f); 
+        float mass = .5f;
+        float drag = .5f;
+        bool gravity = true;
+        bool kinematic = false;
+    };
 
     void setWorld(const float &worldSize) 
     {
         m_worldSize = worldSize; //world center is implicit at 0 0 0
-        m_collisionDetection = new CollisionSolver<vRigidBody>(worldSize);
+        this->m_countRb = 0;
+        if(COLLISION_SOLVER) m_colSolv = new CollisionSolver(worldSize);
     }
 
-    /*virtual ~vPhysics()
+    vRigidBody* addBox(vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
     {
-        vector<vRigidBody>().swap(m_rBodies);
-    }*/
+        m_rBodies.push_back(new Box(this->m_countRb++, pos, color, rot, scale, mass, drag, useGravity, isKinematic, this->m_worldSize));
+        return m_rBodies.back();
+    }
 
-    void addRigidBody(int id, int kind, vec3 pos, GLfloat* color, vec3 rot, vec3 scale, float mass, float drag, bool useGravity, bool isKinematic)
+    vRigidBody* addBox(boxPrefab b)
     {
-        vRigidBody *ptr = new vRigidBody(id, kind, pos, color, rot, scale, mass, drag, useGravity, isKinematic, m_worldSize); 
-        m_rBodies.push_back(ptr);
-        m_collisionDetection->addRigidBody(ptr);
+        return this->addBox(b.pos, b.color, b.rot, b.scale, b.mass, b.drag, b.gravity, b.kinematic);
+    }
+
+    vRigidBody* addSphere(vec3 pos, GLfloat* color, vec3 rot, const float &radius, float mass, float drag, float bounciness, bool useGravity, bool isKinematic)
+    {
+       m_rBodies.push_back(new Sphere(this->m_countRb++, pos, color, rot, radius, mass, drag, bounciness, useGravity, isKinematic, this->m_worldSize));
+       return m_rBodies.back();
+    }
+
+    vRigidBody* addSphere(spherePrefab s)
+    {
+        return this->addSphere(s.pos, s.color, s.rot, s.radius, s.mass, s.drag, s.bounciness, s.gravity, s.kinematic);
     }
 
     void cleanWorld()
     {
-        m_collisionDetection->clean();
-        vector<vRigidBody*>().swap(m_rBodies);
+        //call the decostructor of each obj
+        this->m_rBodies.clear();
+
+        this->m_countRb = 0;
+
+        //make sure mem clear
+        vector<vRigidBody*>().swap(this->m_rBodies);
+
+        if(COLLISION_SOLVER) this->m_colSolv->clean();
     }
 
     void step(float dt)
     {      
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                body->update(dt);
-            });
+        for(int i = 0; i < this->m_rBodies.size(); i ++)
+        {
+            this->m_rBodies.at(i)->update(dt);
+            this->m_rBodies.at(i)->updateConstraint();
+        }
 
-        m_collisionDetection->update();
+        if(COLLISION_SOLVER)
+        {
+            m_colSolv->setBodies(&m_rBodies);
+            m_colSolv->update();
 
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                body->updateConstraint();
-            });
+        }
     }
 
     vector<vRigidBody*>* getRigidBodies()
@@ -84,69 +119,16 @@ public:
         return &m_rBodies;
     }
 
-    vector<triangle> debugTri()
+    //debug
+    void getOctreeNodes(vector<std::pair<vec3, vec3>> &result)
     {
+        if(!COLLISION_SOLVER) return;
 
-        vector<triangle> res; 
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                vector<triangle> t;
-                box<vRigidBody>().getTrianglesfromBox(t, box<vRigidBody>().create(body));
-                for_each(t.begin(), t.end(),
-                [&](triangle tri){
-                    res.push_back(tri);
-                });
-            });
-        return res;
-       /* vector<vec3> res; //SHOW TRINAGLE VERTICES ///method returns vector<vec3>
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                vector<triangle> t;
-                box<vRigidBody>().getTrianglesfromBox(t, box<vRigidBody>().create(body));
-                for_each(t.begin(), t.end(),
-                [&](triangle tri){
-                    res.push_back(tri.v0);
-                    res.push_back(tri.v1);
-                    res.push_back(tri.v2);
-                });
-            });
-        return res; /*
-
-        /*vector<vec3> res; //SHOW VERTICES ///method returns vector<vec3>
-        vector<vec3> tmp;
-
-        int bodyn = 1;
-        for_each(m_rBodies.begin(), m_rBodies.end(),
-            [&](vRigidBody *body)
-            {
-                int point = 0;
-                vector<triangle> t;
-                box<vRigidBody>().debug(t, tmp, box<vRigidBody>().create(body));
-                for_each(tmp.begin(), tmp.end(),
-                [&](vec3 v){
-                    int asd = bodyn*point;
-                    std::cout << "point n =\t" << asd << std::endl;
-                    point++;
-                    res.push_back(v);
-                });
-                body++;
-            });
-        return res; */
+        for_each(this->m_colSolv->octreeLeafs.begin(), this->m_colSolv->octreeLeafs.end(),
+        [&](Octree<vRigidBody>::OctreeNode *n)
+        {
+            result.push_back(std::make_pair(n->m_pos, vec3(n->m_side_size/2.0f, n->m_side_size/2.0f, n->m_side_size/2.0f)));
+        });
     }
 
-    /*int debugCollision(vector<vec3>* t, vector<vec3>* i, vector<vec3>* p, vector<vec3>* l)
-    {
-        return m_collisionDetection->debugCollision(t, i, p, l);
-    }
-
-    int debugCollision2(vector<CollisionResponse::Response> &r)
-    {
-        return m_collisionDetection->debugCollision2(r);
-    } */
-    void debugOctree(vector<Octree<vRigidBody>::OctreeNode*> *nodes)
-    {
-        m_collisionDetection->debugOctree(nodes);
-    }
 };
